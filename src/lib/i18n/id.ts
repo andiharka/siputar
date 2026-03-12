@@ -5,7 +5,7 @@ export interface Translations {
   schedule: { title: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string };
   media: { title: string; addMedia: string; loopCount: string; volume: string; fileMissing: string; noMedia: string; deleteConfirm: string; loopForever: string };
   settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string };
-  actions: { save: string; revert: string; close: string; delete: string; add: string; cancel: string; confirm: string; moveUp: string; moveDown: string };
+  actions: { save: string; revert: string; close: string; delete: string; add: string; play: string; cancel: string; confirm: string; moveUp: string; moveDown: string };
   days: DayNames;
   unsaved: { title: string; message: string; save: string; discard: string; cancel: string };
   playback: { nowPlaying: string; paused: string; pause: string; resume: string; stop: string };
@@ -13,7 +13,7 @@ export interface Translations {
 }
 
 export const id: Translations = {
-  app: { name: 'Playback Announcer' },
+  app: { name: 'Disperpusip Bersuara' },
   schedule: {
     title: 'Jadwal',
     addSchedule: 'Tambah Jadwal',
@@ -44,13 +44,14 @@ export const id: Translations = {
     themeDark: 'Gelap',
     themeAuto: 'Otomatis',
     language: 'Bahasa',
-    runOnStartup: 'Jalankan saat startup',
+    runOnStartup: 'Jalankan saat komputer menyala',
   },
   actions: {
     save: 'Simpan',
     revert: 'Batalkan Perubahan',
     close: 'Tutup',
     delete: 'Hapus',
+    play: 'Putar Sekarang',
     add: 'Tambah',
     cancel: 'Batal',
     confirm: 'Konfirmasi',

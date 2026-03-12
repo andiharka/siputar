@@ -1,11 +1,16 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type { MediaItem } from '$lib/types/index.js';
-  import { getMediaType, getFileName, getVideoThumbnail, getMediaDuration } from '$lib/utils/thumbnail.js';
-  import { openPanel } from '$lib/stores/ui.svelte.js';
-  import { validationStore } from '$lib/stores/config.svelte.js';
-  import { IconChevronLeft, IconChevronRight } from '@tabler/icons-svelte';
-  import { formatDuration } from '$lib/utils/duration.js';
+  import { onMount } from "svelte";
+  import type { MediaItem } from "$lib/types/index.js";
+  import {
+    getMediaType,
+    getFileName,
+    getVideoThumbnail,
+    getMediaDuration,
+  } from "$lib/utils/thumbnail.js";
+  import { openPanel } from "$lib/stores/ui.svelte.js";
+  import { validationStore } from "$lib/stores/config.svelte.js";
+  import { IconChevronLeft, IconChevronRight } from "@tabler/icons-svelte";
+  import { formatDuration } from "$lib/utils/duration.js";
 
   let {
     media,
@@ -32,15 +37,19 @@
 
   onMount(() => {
     if (!isMissing) {
-      if (type === 'video') {
-        getVideoThumbnail(media.id, media.path).then(t => { thumbnail = t; });
+      if (type === "video") {
+        getVideoThumbnail(media.id, media.path).then((t) => {
+          thumbnail = t;
+        });
       }
-      getMediaDuration(media.id, media.path, type).then(d => { duration = d; });
+      getMediaDuration(media.id, media.path, type).then((d) => {
+        duration = d;
+      });
     }
   });
 
   function handleClick() {
-    openPanel({ type: 'media', scheduleId, mediaId: media.id });
+    openPanel({ type: "media", scheduleId, mediaId: media.id });
   }
 </script>
 
@@ -56,7 +65,7 @@
   <div class="thumb">
     {#if isMissing}
       <div class="thumb-placeholder missing-icon">!</div>
-    {:else if type === 'video'}
+    {:else if type === "video"}
       {#if thumbnail}
         <img src={thumbnail} alt={fileName} class="thumb-img" />
       {:else}
@@ -72,17 +81,23 @@
         <button
           class="move-btn"
           class:invisible={isFirst}
-          onclick={(e) => { e.stopPropagation(); onmove?.(index, -1); }}
+          onclick={(e) => {
+            e.stopPropagation();
+            onmove?.(index, -1);
+          }}
           title="Pindah kiri"
-          tabindex="-1"
-        ><IconChevronLeft size={14} /></button>
+          tabindex="-1"><IconChevronLeft size={14} /></button
+        >
         <button
           class="move-btn"
           class:invisible={isLast}
-          onclick={(e) => { e.stopPropagation(); onmove?.(index, 1); }}
+          onclick={(e) => {
+            e.stopPropagation();
+            onmove?.(index, 1);
+          }}
           title="Pindah kanan"
-          tabindex="-1"
-        ><IconChevronRight size={14} /></button>
+          tabindex="-1"><IconChevronRight size={14} /></button
+        >
       </div>
     {/if}
   </div>
@@ -105,67 +120,138 @@
 
 <style>
   .chip {
-    flex-shrink: 0; width: 120px; cursor: pointer;
-    border-radius: var(--radius-md); overflow: hidden;
-    background: var(--color-surface-2); border: 1px solid var(--color-border);
-    transition: var(--transition); user-select: none; position: relative;
+    flex-shrink: 0;
+    width: 120px;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    transition: var(--transition);
+    user-select: none;
+    position: relative;
   }
-  .chip:hover { border-color: var(--color-primary); }
-  .chip.missing { border-color: var(--color-danger); opacity: 0.8; }
+  .chip:hover {
+    border-color: var(--color-primary);
+  }
+  .chip.missing {
+    border-color: var(--color-danger);
+    opacity: 0.8;
+  }
 
   .thumb {
-    width: 100%; aspect-ratio: 16/9; overflow: hidden;
-    background: var(--color-border); position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: var(--color-border);
+    position: relative;
   }
-  .thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
   .thumb-placeholder {
-    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-    font-size: 22px; color: var(--color-text-muted);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: var(--color-text-muted);
   }
-  .thumb-placeholder.audio { background: color-mix(in srgb, var(--color-primary) 15%, transparent); }
-  .thumb-placeholder.missing-icon { background: color-mix(in srgb, var(--color-danger) 15%, transparent); color: var(--color-danger); font-weight: 700; }
+  .thumb-placeholder.audio {
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  .thumb-placeholder.missing-icon {
+    background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    color: var(--color-danger);
+    font-weight: 700;
+  }
 
   /* Move overlay — shown on chip hover */
   .move-overlay {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: space-between;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 0 3px;
-    opacity: 0; transition: opacity 0.15s;
-    background: rgba(0,0,0,0.35);
+    opacity: 0;
+    transition: opacity 0.15s;
+    background: rgba(0, 0, 0, 0.35);
   }
-  .chip:hover .move-overlay { opacity: 1; }
+  .chip:hover .move-overlay {
+    opacity: 1;
+  }
 
   .move-btn {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: rgba(255,255,255,0.9); border: none;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: #222; padding: 0; transition: 0.15s; flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #222;
+    padding: 0;
+    transition: 0.15s;
+    flex-shrink: 0;
   }
-  .move-btn:hover { background: white; transform: scale(1.1); }
-  .move-btn.invisible { opacity: 0; pointer-events: none; }
+  .move-btn:hover {
+    background: white;
+    transform: scale(1.1);
+  }
+  .move-btn.invisible {
+    opacity: 0;
+    pointer-events: none;
+  }
 
   .info {
-    padding: 6px 8px; display: flex; flex-direction: column; gap: 3px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
   }
   .name {
-    font-size: 11px; font-weight: 500; color: var(--color-text);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     max-width: 100%;
   }
   .meta-row {
-    display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    flex-wrap: wrap;
   }
   .duration-badge {
-    font-size: 10px; color: var(--color-text-muted);
+    font-size: 10px;
+    color: var(--color-text-muted);
   }
   .loop-badge {
-    font-size: 10px; font-weight: 600; color: var(--color-primary);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-primary);
     background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-    border-radius: 4px; padding: 1px 5px; align-self: flex-start;
+    border-radius: 4px;
+    padding: 1px 5px;
+    align-self: flex-start;
   }
   .missing-badge {
-    font-size: 10px; font-weight: 700; color: var(--color-danger);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--color-danger);
     background: color-mix(in srgb, var(--color-danger) 12%, transparent);
-    border-radius: 4px; padding: 1px 5px; align-self: flex-start;
+    border-radius: 4px;
+    padding: 1px 5px;
+    align-self: flex-start;
   }
 </style>

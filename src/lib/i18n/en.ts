@@ -39,6 +39,7 @@ export const en: Translations = {
     revert: 'Revert Changes',
     close: 'Close',
     delete: 'Delete',
+    play: 'Play Now',
     add: 'Add',
     cancel: 'Cancel',
     confirm: 'Confirm',
