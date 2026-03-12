@@ -7,6 +7,8 @@ let _playback = $state<PlaybackState>({
   currentLoop: 0,
   mediaPath: null,
   mediaType: null,
+  playlist: [],
+  currentIndex: 0,
 });
 
 let _schedulerStatus = $state<SchedulerStatus>('active');

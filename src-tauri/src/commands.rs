@@ -51,7 +51,7 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
     if app.get_webview_window("mini-player").is_none() {
         WebviewWindowBuilder::new(&app, "mini-player", WebviewUrl::App("/mini-player".into()))
             .title("Now Playing")
-            .inner_size(380.0, 100.0)
+            .inner_size(380.0, 480.0)
             .resizable(false)
             .always_on_top(true)
             .decorations(false)

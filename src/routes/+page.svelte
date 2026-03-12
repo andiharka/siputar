@@ -7,6 +7,7 @@
   import { playbackStore, setPlaybackState, setSchedulerStatus } from '$lib/stores/playback.svelte.js';
   import { uiStore, openSettings, showConfirm } from '$lib/stores/ui.svelte.js';
   import { t } from '$lib/i18n/index.svelte.js';
+  import { getFileName } from '$lib/utils/thumbnail.js';
   import ScheduleList from '$lib/components/ScheduleList.svelte';
   import ConfigPanel from '$lib/components/ConfigPanel.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -101,8 +102,9 @@
     const { emit } = await import('@tauri-apps/api/event');
     const item = playQueue[index];
     if (!item) return;
-    setPlaybackState({ mediaPath: item.path, mediaType: item.type, mediaIndex: index });
-    await emit('playback:start', { path: item.path, type: item.type, volume: item.volume });
+    setPlaybackState({ mediaPath: item.path, mediaType: item.type, mediaIndex: index, currentIndex: index });
+    const playlist = playQueue.map(q => ({ name: getFileName(q.path), type: q.type, path: q.path, loopCount: q.loopCount }));
+    await emit('playback:start', { path: item.path, type: item.type, volume: item.volume, playlist, currentIndex: index });
   }
 
   async function advancePlaybackQueue() {

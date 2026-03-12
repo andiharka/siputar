@@ -31,6 +31,13 @@ export interface AppConfig {
 
 export type SchedulerStatus = 'active' | 'paused';
 
+export interface PlaylistItem {
+  name: string;
+  type: 'video' | 'audio';
+  path: string;
+  loopCount: number;
+}
+
 export interface PlaybackState {
   status: 'idle' | 'playing' | 'paused';
   scheduleId: string | null;
@@ -38,6 +45,8 @@ export interface PlaybackState {
   currentLoop: number;
   mediaPath: string | null;
   mediaType: 'video' | 'audio' | null;
+  playlist: PlaylistItem[];
+  currentIndex: number;
 }
 
 export type SelectionType = 'schedule' | 'media' | 'settings' | null;
