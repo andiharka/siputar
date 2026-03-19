@@ -2,6 +2,7 @@ import type { Selection } from '$lib/types/index.js';
 
 let _selection = $state<Selection>({ type: null });
 let _panelOpen = $state(false);
+let _ttsPanelOpen = $state(false);
 let _confirmDialog = $state<{
   open: boolean;
   title: string;
@@ -13,6 +14,7 @@ let _confirmDialog = $state<{
 export const uiStore = {
   get selection() { return _selection; },
   get panelOpen() { return _panelOpen; },
+  get ttsPanelOpen() { return _ttsPanelOpen; },
   get confirmDialog() { return _confirmDialog; },
 };
 
@@ -29,6 +31,14 @@ export function closePanel(): void {
 export function openSettings(): void {
   _selection = { type: 'settings' };
   _panelOpen = true;
+}
+
+export function openTTSPanel(): void {
+  _ttsPanelOpen = true;
+}
+
+export function closeTTSPanel(): void {
+  _ttsPanelOpen = false;
 }
 
 export function showConfirm(title: string, message: string, onConfirm: () => void, onCancel?: () => void): void {
