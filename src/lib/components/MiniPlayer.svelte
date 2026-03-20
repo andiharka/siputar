@@ -246,7 +246,7 @@
   }
 
   .media-area {
-    height: 211px;
+    height: 214px;
     flex-shrink: 0;
     overflow: hidden;
     background: #000;

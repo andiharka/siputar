@@ -16,6 +16,7 @@
     IconDisc,
     IconPlus,
     IconBellRinging,
+    IconPencil,
   } from "@tabler/icons-svelte";
 
   let {
@@ -122,15 +123,20 @@
         title="Putar sekarang"><IconDisc size={15} />{tr.actions.play}</button
       >
       <button
-        class="btn btn-ghost btn-icon"
+        class="btn btn-ghost btn-icon tt"
         onclick={handleOpenSettings}
-        title="Edit jadwal"><IconSettings size={15} /></button
-      >
+        title="Edit jadwal"
+        ><IconPencil size={15} />
+        <span class="tt__bubble">{tr.actions.edit}</span>
+      </button>
       <button
-        class="btn btn-ghost btn-icon btn-danger"
+        class="btn btn-ghost btn-icon btn-danger-hover tt"
         onclick={handleDeleteSchedule}
-        title={tr.actions.delete}><IconTrash size={15} /></button
+        title={tr.actions.delete}
       >
+        <IconTrash size={15} />
+        <span class="tt__bubble">{tr.actions.delete}</span>
+      </button>
     </div>
   </div>
 

@@ -8,13 +8,14 @@
     configStore,
     saveConfig,
     revertConfig,
+    addSchedule,
   } from "$lib/stores/config.svelte.js";
   import {
     playbackStore,
     setPlaybackState,
     setSchedulerStatus,
   } from "$lib/stores/playback.svelte.js";
-  import { uiStore, openSettings, showConfirm } from "$lib/stores/ui.svelte.js";
+  import { openSettings, showConfirm } from "$lib/stores/ui.svelte.js";
   import { t } from "$lib/i18n/index.svelte.js";
   import { getFileName } from "$lib/utils/thumbnail.js";
   import ScheduleList from "$lib/components/ScheduleList.svelte";
@@ -23,6 +24,7 @@
   import {
     IconPlayerPause,
     IconPlayerPlay,
+    IconPlus,
     IconSettings,
   } from "@tabler/icons-svelte";
 
@@ -108,6 +110,7 @@
   }[] = [];
   let queueIndex = 0;
   let loopRemaining = 0;
+  let newScheduleId = $state<string | null>(null);
 
   async function startScheduledPlayback(scheduleId: string) {
     const schedule = configStore.schedules.find((s) => s.id === scheduleId);
@@ -183,40 +186,62 @@
       setSchedulerStatus("active");
     }
   }
+
+  async function handleAddSchedule() {
+    const { tick } = await import("svelte");
+    const schedule = addSchedule();
+    newScheduleId = schedule.id;
+    await tick();
+    // Scroll the new card into view
+    const el = document.getElementById(`schedule-${schedule.id}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Clear highlight after animation completes
+    setTimeout(() => {
+      newScheduleId = null;
+    }, 1600);
+  }
 </script>
 
 <svelte:head><title>{tr.nav.schedules} - {tr.app.name}</title></svelte:head>
 
 <div class="page-header">
   <div class="header-left">
-    <span
-      class="badge"
+    <button
+      class="btn badge tt"
+      onclick={handleToggleScheduler}
       class:badge-active={schedulerStatus === "active"}
       class:badge-paused={schedulerStatus === "paused"}
-      >{schedulerStatus === "active"
-        ? tr.status.active
-        : tr.status.paused}</span
     >
+      {#if schedulerStatus === "active"}
+        <IconPlayerPlay size={16} />
+        {tr.status.active}
+        <span class="tooltip">- {tr.schedule.statusEnabled}</span>
+      {:else}
+        <IconPlayerPause size={16} />
+        {tr.status.paused}
+        <span class="tooltip">- {tr.schedule.statusDisabled}</span>
+      {/if}
+    </button>
   </div>
   <div class="header-actions">
     {#if isDirty}
-      <button class="btn btn-ghost" onclick={revertConfig}
-        >{tr.actions.revert}</button
-      >
-      <button class="btn btn-primary" onclick={saveConfig}
-        >{tr.actions.save}</button
-      >
+      <div class="btn-group">
+        <button class="btn btn-ghost" onclick={revertConfig}
+          >{tr.actions.revert}</button
+        >
+        <button class="btn btn-success" onclick={saveConfig}
+          >{tr.actions.save}</button
+        >
+      </div>
     {/if}
     <button
-      class="btn btn-ghost btn-icon"
-      onclick={handleToggleScheduler}
-      title={schedulerStatus === "active"
-        ? "Jeda semua jadwal"
-        : "Aktifkan semua jadwal"}
-      >{#if schedulerStatus === "active"}<IconPlayerPause
-          size={16}
-        />{:else}<IconPlayerPlay size={16} />{/if}</button
+      class="btn btn-primary"
+      onclick={handleAddSchedule}
+      title={tr.schedule.addSchedule}
     >
+      <IconPlus size={16} />
+      {tr.schedule.addSchedule}
+    </button>
     <button
       class="btn btn-ghost btn-icon"
       onclick={openSettings}
@@ -226,7 +251,7 @@
 </div>
 
 <div class="page-content">
-  <ScheduleList onplay={startScheduledPlayback} />
+  <ScheduleList onplay={startScheduledPlayback} {newScheduleId} />
 </div>
 
 <ConfigPanel />

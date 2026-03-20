@@ -36,10 +36,10 @@ fn load_tray_icon(app: &AppHandle, status: &SchedulerStatus) -> Option<Image<'st
 }
 
 pub fn setup_tray(app: &AppHandle, state: Arc<Mutex<SchedulerState>>) -> tauri::Result<()> {
-    let pause_item = MenuItem::with_id(app, "pause-resume", "⏸  Jeda Semua Jadwal", true, None::<&str>)?;
-    let open_item = MenuItem::with_id(app, "open", "🪟  Buka Aplikasi", true, None::<&str>)?;
+    let pause_item = MenuItem::with_id(app, "pause-resume", "Jeda Semua Jadwal", true, None::<&str>)?;
+    let open_item = MenuItem::with_id(app, "open", "Buka Aplikasi", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
-    let exit_item = MenuItem::with_id(app, "exit", "✕  Keluar", true, None::<&str>)?;
+    let exit_item = MenuItem::with_id(app, "exit", "Keluar", true, None::<&str>)?;
 
     let menu = Menu::with_items(app, &[&pause_item, &open_item, &sep, &exit_item])?;
 

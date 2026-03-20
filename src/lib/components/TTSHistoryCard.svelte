@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte.js';
+  import { t } from "$lib/i18n/index.svelte.js";
   import {
     ttsStore,
     downloadAudio,
     deleteHistoryItem,
     openAudioFolder,
-  } from '$lib/stores/tts.svelte.js';
-  import { showConfirm } from '$lib/stores/ui.svelte.js';
-  import type { TTSHistoryItem } from '$lib/types/index.js';
+  } from "$lib/stores/tts.svelte.js";
+  import { showConfirm } from "$lib/stores/ui.svelte.js";
+  import type { TTSHistoryItem } from "$lib/types/index.js";
   import {
     IconPlayerPlay,
     IconPlayerStop,
@@ -15,7 +15,7 @@
     IconFolder,
     IconTrash,
     IconLoader,
-  } from '@tabler/icons-svelte';
+  } from "@tabler/icons-svelte";
 
   interface Props {
     item: TTSHistoryItem;
@@ -27,50 +27,60 @@
   const playingId = $derived(ttsStore.playingId);
   const isPlaying = $derived(playingId === item.id);
   const hasLocalFile = $derived(!!item.localFilePath);
-  const isGenerating = $derived(item.status === 'generating' || item.status === 'pending');
+  const isGenerating = $derived(
+    item.status === "generating" || item.status === "pending",
+  );
 
   let isDownloading = $state(false);
   let audioElement: HTMLAudioElement | null = null;
 
   function formatDate(dateStr: string): string {
     const date = new Date(dateStr);
-    return date.toLocaleString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
 
   function truncateText(text: string, maxLength: number = 100): string {
     if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + '...';
+    return text.slice(0, maxLength) + "...";
   }
 
   function getStatusBadgeClass(status: string): string {
     switch (status) {
-      case 'completed': return 'badge-success';
-      case 'failed': return 'badge-danger';
-      case 'generating':
-      case 'pending': return 'badge-warning';
-      default: return '';
+      case "completed":
+        return "badge-success";
+      case "failed":
+        return "badge-danger";
+      case "generating":
+      case "pending":
+        return "badge-warning";
+      default:
+        return "";
     }
   }
 
   function getStatusText(status: string): string {
     switch (status) {
-      case 'completed': return tr.tts.completed;
-      case 'failed': return tr.tts.failed;
-      case 'generating':
-      case 'pending': return tr.tts.generating;
-      default: return status;
+      case "completed":
+        return tr.tts.completed;
+      case "failed":
+        return tr.tts.failed;
+      case "generating":
+      case "pending":
+        return tr.tts.generating;
+      default:
+        return status;
     }
   }
 
   async function handlePlay() {
     if (!item.localFilePath) return;
-    
+
     if (isPlaying) {
       audioElement?.pause();
       ttsStore.playingId = null;
@@ -79,11 +89,13 @@
 
     // Stop any currently playing audio
     if (ttsStore.playingId) {
-      const event = new CustomEvent('tts-stop-audio');
+      const event = new CustomEvent("tts-stop-audio");
       window.dispatchEvent(event);
     }
 
-    audioElement = new Audio(`asset://localhost/${encodeURIComponent(item.localFilePath)}`);
+    audioElement = new Audio(
+      `asset://localhost/${encodeURIComponent(item.localFilePath)}`,
+    );
     audioElement.onended = () => {
       ttsStore.playingId = null;
     };
@@ -101,7 +113,7 @@
     try {
       await downloadAudio(item.historyItemId);
     } catch (e) {
-      console.error('Download failed:', e);
+      console.error("Download failed:", e);
     } finally {
       isDownloading = false;
     }
@@ -114,13 +126,9 @@
   }
 
   function handleDelete() {
-    showConfirm(
-      tr.actions.delete,
-      tr.tts.deleteConfirm,
-      async () => {
-        await deleteHistoryItem(item.id, item.historyItemId);
-      }
-    );
+    showConfirm(tr.actions.delete, tr.tts.deleteConfirm, async () => {
+      await deleteHistoryItem(item.id, item.historyItemId);
+    });
   }
 
   // Listen for stop audio event from other cards
@@ -131,8 +139,8 @@
         audioElement = null;
       }
     };
-    window.addEventListener('tts-stop-audio', handler);
-    return () => window.removeEventListener('tts-stop-audio', handler);
+    window.addEventListener("tts-stop-audio", handler);
+    return () => window.removeEventListener("tts-stop-audio", handler);
   });
 </script>
 
@@ -163,7 +171,9 @@
     {#if item.similarityBoost !== null}
       <div class="tooltip-row">
         <span class="tooltip-label">{tr.tts.similarity}:</span>
-        <span class="tooltip-value">{(item.similarityBoost * 100).toFixed(0)}%</span>
+        <span class="tooltip-value"
+          >{(item.similarityBoost * 100).toFixed(0)}%</span
+        >
       </div>
     {/if}
     <div class="tooltip-row">
@@ -208,7 +218,7 @@
         {/if}
       </button>
     {/if}
-    
+
     {#if !isGenerating}
       <button
         class="btn btn-ghost btn-icon btn-danger-hover"
@@ -309,7 +319,9 @@
     box-shadow: var(--shadow-md);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.15s ease, visibility 0.15s ease;
+    transition:
+      opacity 0.15s ease,
+      visibility 0.15s ease;
     pointer-events: none;
     min-width: 180px;
   }
@@ -349,31 +361,30 @@
     height: 32px;
   }
 
-  .btn-danger-hover:hover {
-    color: var(--color-danger);
-    border-color: var(--color-danger);
-  }
-
   :global(.spinning) {
     animation: spin 1s linear infinite;
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
-  :global([data-theme='dark']) .badge-success {
+  :global([data-theme="dark"]) .badge-success {
     background: #166534;
     color: #dcfce7;
   }
 
-  :global([data-theme='dark']) .badge-danger {
+  :global([data-theme="dark"]) .badge-danger {
     background: #991b1b;
     color: #fee2e2;
   }
 
-  :global([data-theme='dark']) .badge-warning {
+  :global([data-theme="dark"]) .badge-warning {
     background: #92400e;
     color: #fef3c7;
   }

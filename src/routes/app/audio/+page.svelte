@@ -2,7 +2,13 @@
   import { onMount } from "svelte";
   import { t } from "$lib/i18n/index.svelte.js";
   import { configStore, loadConfig } from "$lib/stores/config.svelte.js";
-  import { ttsStore, loadTTSHistory, syncWithElevenLabs, loadSubscription, clearError } from "$lib/stores/tts.svelte.js";
+  import {
+    ttsStore,
+    loadTTSHistory,
+    syncWithElevenLabs,
+    loadSubscription,
+    clearError,
+  } from "$lib/stores/tts.svelte.js";
   import { openTTSPanel } from "$lib/stores/ui.svelte.js";
   import CreditsDisplay from "$lib/components/CreditsDisplay.svelte";
   import TTSHistoryList from "$lib/components/TTSHistoryList.svelte";
@@ -30,7 +36,7 @@
       await loadConfig();
       // Load local history from SQLite (no API call)
       await loadTTSHistory();
-      
+
       // Only load subscription (quota) on page load - this is fast-changing data
       if (navigator.onLine && configStore.settings.hasApiKey) {
         await loadSubscription();
@@ -38,14 +44,14 @@
     })();
 
     // Listen for online/offline events
-    const handleOnline = () => ttsStore.isOnline = true;
-    const handleOffline = () => ttsStore.isOnline = false;
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    const handleOnline = () => (ttsStore.isOnline = true);
+    const handleOffline = () => (ttsStore.isOnline = false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   });
 
@@ -60,12 +66,16 @@
 <div class="page-header">
   <div class="header-left">
     <CreditsDisplay />
-    <span class="connection-status" class:online={isOnline} class:offline={!isOnline}>
+    <span
+      class="badge connection-status"
+      class:badge-active={isOnline}
+      class:badge-paused={!isOnline}
+    >
       {#if isOnline}
-        <IconWifi size={14} />
+        <IconWifi size={14} />{tr.tts.connectionOnline}
       {:else}
         <IconWifiOff size={14} />
-        <span class="status-text">{tr.tts.offline}</span>
+        <span class="status-text">{tr.tts.connectionOffline}</span>
       {/if}
     </span>
   </div>
@@ -190,7 +200,7 @@
     font-size: 13px;
   }
 
-  :global([data-theme='dark']) .error-banner {
+  :global([data-theme="dark"]) .error-banner {
     background: #450a0a;
     color: #fecaca;
   }
@@ -213,7 +223,11 @@
     animation: spin 1s linear infinite;
   }
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>
