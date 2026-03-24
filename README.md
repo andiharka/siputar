@@ -6,6 +6,7 @@ A desktop application for scheduling and playing multimedia announcements with T
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![Tauri](https://img.shields.io/badge/Tauri-2.0-orange.svg)
 ![Svelte](https://img.shields.io/badge/Svelte-5.0-red.svg)
+![Build](https://github.com/andiharka/playback-announcer/workflows/Build/badge.svg)
 
 ## 📋 Overview
 
@@ -36,17 +37,25 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
 
 #### Option 1: Install from Release (Recommended)
 
-1. Download the latest release for your platform from the [Releases](https://github.com/yourusername/playback-announcer/releases) page
-2. Run the installer:
-   - **macOS**: Open the `.dmg` file and drag the app to Applications
-   - **Windows**: Run the `.msi` or `.exe` installer
-   - **Linux**: Install the `.deb` or `.AppImage` package
+1. Go to the [Releases](https://github.com/andiharka/playback-announcer/releases) page and download the latest version
+2. Choose the installer for your platform:
+   - **macOS**: Download the `.dmg` file
+     - Open the `.dmg` file
+     - Drag the app to Applications folder
+     - On first launch, right-click → Open (to bypass Gatekeeper if unsigned)
+   - **Windows**: Download the `.msi` installer
+     - Run the `.msi` installer
+     - Follow the installation wizard
+     - Windows SmartScreen may appear (click "More info" → "Run anyway" if unsigned)
+   - **Linux**: Download the `.deb` (Debian/Ubuntu) or `.AppImage` (universal)
+     - **Debian/Ubuntu**: `sudo dpkg -i playback-announcer_*.deb`
+     - **AppImage**: Make executable (`chmod +x *.AppImage`) then run
 
 #### Option 2: Build from Source
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/playback-announcer.git
+   git clone https://github.com/andiharka/playback-announcer.git
    cd playback-announcer
    ```
 
@@ -267,7 +276,7 @@ See the [LICENSE](LICENSE) file for the full license text or visit [https://www.
 ## 📞 Support
 
 For issues, questions, or feature requests:
-- Open an issue on [GitHub Issues](https://github.com/yourusername/playback-announcer/issues)
+- Open an issue on [GitHub Issues](https://github.com/andiharka/playback-announcer/issues)
 - Check existing issues before creating a new one
 
 ## 🗺️ Roadmap

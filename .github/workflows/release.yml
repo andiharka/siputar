@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags like v1.0.0, v0.1.0, etc.
+
+jobs:
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    outputs:
+      release_id: ${{ steps.create-release.outputs.result }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Get version from tag
+        id: tag_name
+        run: echo "current_version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create-release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${{ steps.tag_name.outputs.current_version }}`,
+              name: `Playback Announcer v${{ steps.tag_name.outputs.current_version }}`,
+              body: `## What's Changed\n\nSee the [commits](https://github.com/${context.repo.owner}/${context.repo.repo}/commits/v${{ steps.tag_name.outputs.current_version }}) for details.\n\n## Installation\n\nDownload the appropriate installer for your platform:\n\n- **macOS**: Download the \`.dmg\` file\n- **Windows**: Download the \`.msi\` installer\n- **Linux**: Download the \`.deb\` (Debian/Ubuntu) or \`.AppImage\` (universal)`,
+              draft: false,
+              prerelease: false
+            })
+            return data.id
+
+  build-release:
+    needs: create-release
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, ubuntu-22.04, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install dependencies (Ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+
+      - name: Install frontend dependencies
+        run: bun install
+
+      - name: Build and release Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: --verbose
