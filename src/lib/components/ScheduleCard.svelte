@@ -235,15 +235,6 @@
     font-size: 12px;
     color: var(--color-text-muted);
   }
-  .btn-danger:hover {
-    color: var(--color-danger) !important;
-    background: color-mix(
-      in srgb,
-      var(--color-danger) 10%,
-      transparent
-    ) !important;
-  }
-
   .media-strip {
     display: flex;
     gap: 10px;
