@@ -162,12 +162,6 @@
     font-size: 12px;
     color: var(--color-text-muted);
   }
-  .connection-status.online {
-    color: var(--color-success);
-  }
-  .connection-status.offline {
-    color: var(--color-warning);
-  }
   .status-text {
     font-size: 11px;
   }
