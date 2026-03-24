@@ -52,7 +52,7 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 ### Prerequisites
 
-- **Node.js** v18 or higher
+- **Node.js** v20 or higher (v18 is not supported due to missing `styleText` in node:util)
 - **Bun** package manager
 - **Rust** (latest stable)
 - **Platform-specific dependencies:**

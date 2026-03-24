@@ -29,7 +29,7 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
 
 ### Prerequisites
 
-- **Node.js** (v18 or higher) and **Bun** package manager
+- **Node.js** (v20 or higher) and **Bun** package manager
 - **Rust** (latest stable version)
 - **macOS**, **Windows**, or **Linux** operating system
 
