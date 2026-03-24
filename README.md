@@ -42,14 +42,22 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
    - **macOS**: Download the `.dmg` file
      - Open the `.dmg` file
      - Drag the app to Applications folder
-     - On first launch, right-click → Open (to bypass Gatekeeper if unsigned)
+     - **Important:** GitHub-built apps are unsigned and will show "damaged" error
+     - **Fix:** Open Terminal and run:
+       ```bash
+       xattr -cr "/Applications/Playback Announcer.app"
+       ```
+     - Then double-click the app to launch
+     - See [Troubleshooting](#troubleshooting) for details
    - **Windows**: Download the `.msi` installer
      - Run the `.msi` installer
      - Follow the installation wizard
-     - Windows SmartScreen may appear (click "More info" → "Run anyway" if unsigned)
+     - Windows SmartScreen may appear (click "More info" → "Run anyway" for unsigned builds)
    - **Linux**: Download the `.deb` (Debian/Ubuntu) or `.AppImage` (universal)
      - **Debian/Ubuntu**: `sudo dpkg -i playback-announcer_*.deb`
      - **AppImage**: Make executable (`chmod +x *.AppImage`) then run
+
+> **Note:** Builds are currently unsigned. macOS and Windows will show security warnings. This is normal for open-source apps without paid developer certificates.
 
 #### Option 2: Build from Source
 
@@ -246,6 +254,73 @@ Contributions are welcome! Please follow these guidelines:
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines and development setup.
+
+## 🔧 Troubleshooting
+
+### macOS: "App is damaged and can't be opened"
+
+This error occurs because GitHub-built apps are not code-signed with an Apple Developer certificate.
+
+**Solution:**
+
+1. Open Terminal
+2. Run this command to remove the quarantine flag:
+   ```bash
+   xattr -cr "/Applications/Playback Announcer.app"
+   ```
+3. The app will now open normally
+
+**Why this happens:**
+- macOS Gatekeeper blocks unsigned apps downloaded from the internet
+- Apps built locally don't have this issue
+- Right-click → Open doesn't work for unsigned GitHub-built apps
+- The `xattr -cr` command removes the quarantine attribute, allowing the app to run
+
+**Alternative:** Build from source locally (see [Build from Source](#option-2-build-from-source))
+
+### Windows: SmartScreen Warning
+
+Windows may show "Windows protected your PC" when running the installer.
+
+**Solution:**
+1. Click "More info"
+2. Click "Run anyway"
+
+This is normal for unsigned applications. The app is safe to run.
+
+### Linux: Permission Denied (AppImage)
+
+If the AppImage won't run:
+
+```bash
+chmod +x playback-announcer_*.AppImage
+./playback-announcer_*.AppImage
+```
+
+### ElevenLabs API Key Issues
+
+**"API key not configured" error:**
+
+1. Go to Settings → ElevenLabs section
+2. Paste your API key
+3. Click "Test Connection"
+4. If test succeeds but error persists, restart the app
+
+**On first macOS launch:**
+- Keychain may prompt for permission
+- Click "Always Allow" for best experience
+
+### Database Errors
+
+If you encounter database errors, the SQLite file may be corrupted:
+
+**macOS:** `~/Library/Application Support/com.disperpusip.playbackannouncer/`
+**Windows:** `%APPDATA%\com.disperpusip.playbackannouncer\`
+**Linux:** `~/.local/share/com.disperpusip.playbackannouncer/`
+
+Delete the `playback_announcer.db` file and restart the app.
 
 ## 📄 License
 

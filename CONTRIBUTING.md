@@ -242,6 +242,14 @@ git push origin v0.2.0-beta.1
 
 Mark the release as "pre-release" in GitHub.
 
+### macOS Code Signing (Optional)
+
+Releases are currently unsigned, requiring users to run `xattr -cr` to open the app. To eliminate this:
+
+- See [`.github/MACOS_CODE_SIGNING.md`](.github/MACOS_CODE_SIGNING.md) for complete guide
+- Requires Apple Developer Program ($99/year)
+- Provides best user experience (no warnings)
+
 ## Coding Standards
 
 ### TypeScript/Svelte
