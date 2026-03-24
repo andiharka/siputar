@@ -56,7 +56,7 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 - **Bun** package manager
 - **Rust** (latest stable)
 - **Platform-specific dependencies:**
-  - **Linux**: `libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libsoup-3.0-dev`
+  - **Linux**: `libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev`
   - **macOS**: Xcode Command Line Tools
   - **Windows**: Microsoft C++ Build Tools
 
