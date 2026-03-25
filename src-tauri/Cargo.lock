@@ -3176,6 +3176,7 @@ dependencies = [
  "chrono",
  "dirs 6.0.0",
  "keyring",
+ "once_cell",
  "reqwest",
  "rusqlite",
  "serde",

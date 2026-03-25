@@ -1,20 +1,11 @@
 <script lang="ts">
   import { t } from '$lib/i18n/index.svelte.js';
-  import { ttsStore, loadSubscription, formatCredits, getCreditsPercent } from '$lib/stores/tts.svelte.js';
-  import { configStore } from '$lib/stores/config.svelte.js';
-  import { onMount } from 'svelte';
+  import { ttsStore, formatCredits, getCreditsPercent } from '$lib/stores/tts.svelte.js';
 
   const tr = $derived(t());
   const subscription = $derived(ttsStore.subscription);
-  const hasApiKey = $derived(configStore.settings.hasApiKey);
   const creditsText = $derived(formatCredits(subscription));
   const creditsPercent = $derived(getCreditsPercent(subscription));
-
-  onMount(async () => {
-    if (hasApiKey && ttsStore.isOnline) {
-      await loadSubscription();
-    }
-  });
 </script>
 
 <div class="credits-display">
