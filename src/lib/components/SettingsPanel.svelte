@@ -4,6 +4,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { open } from '@tauri-apps/plugin-dialog';
   import { IconCheck, IconX, IconLoader, IconFolder } from '@tabler/icons-svelte';
+  import { onMount } from 'svelte';
 
   const tr = $derived(t());
   const hasApiKey = $derived(configStore.settings.hasApiKey);
@@ -14,14 +15,10 @@
   let testStatus = $state<'idle' | 'testing' | 'success' | 'failed'>('idle');
   let testError = $state<string | null>(null);
   let showApiKeyInput = $state(false);
-  let isInitialized = $state(false);
 
-  // Verify keychain state on mount only, not on every change
-  $effect(() => {
-    if (!isInitialized) {
-      verifyAndLoadApiKey();
-      isInitialized = true;
-    }
+  // Verify keychain state on mount only - using onMount instead of $effect
+  onMount(() => {
+    verifyAndLoadApiKey();
   });
 
   async function verifyAndLoadApiKey() {

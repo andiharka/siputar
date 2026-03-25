@@ -3,11 +3,12 @@
   import { t } from "$lib/i18n/index.svelte.js";
   import ScheduleCard from "./ScheduleCard.svelte";
   import { compareTime } from "$lib/utils/time.js";
+  import { IconTimelineEventExclamation } from "@tabler/icons-svelte";
 
-  let { 
+  let {
     onplay,
-    newScheduleId = null
-  }: { 
+    newScheduleId = null,
+  }: {
     onplay?: (scheduleId: string) => void;
     newScheduleId?: string | null;
   } = $props();
@@ -21,7 +22,9 @@
 <div class="list">
   {#if sorted.length === 0}
     <div class="empty">
-      <div class="empty-icon">📅</div>
+      <div class="empty-icon">
+        <IconTimelineEventExclamation size={96} stroke={0.625} />
+      </div>
       <p>{tr.schedule.noSchedules}</p>
     </div>
   {:else}
@@ -54,7 +57,6 @@
     color: var(--color-text-muted);
   }
   .empty-icon {
-    font-size: 48px;
     margin-bottom: 16px;
   }
   .empty p {

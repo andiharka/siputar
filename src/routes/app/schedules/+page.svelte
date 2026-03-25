@@ -245,8 +245,9 @@
     <button
       class="btn btn-ghost btn-icon"
       onclick={openSettings}
-      title={tr.settings.title}><IconSettings size={16} /></button
-    >
+      title={tr.settings.title}
+      ><IconSettings size={16} />
+    </button>
   </div>
 </div>
 
