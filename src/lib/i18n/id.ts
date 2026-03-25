@@ -61,8 +61,8 @@ export const id: Translations = {
     browse: 'Pilih Folder',
   },
   actions: {
-    save: 'Simpan',
-    revert: 'Batalkan Perubahan',
+    save: 'Simpan Perubahan',
+    revert: 'Batal',
     close: 'Tutup',
     edit: 'Edit',
     delete: 'Hapus',

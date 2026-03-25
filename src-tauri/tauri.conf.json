@@ -14,10 +14,10 @@
       {
         "label": "main",
         "title": "Playback Announcer",
-        "width": 1024,
-        "height": 700,
-        "minWidth": 800,
-        "minHeight": 500,
+        "width": 900,
+        "height": 600,
+        "minWidth": 700,
+        "minHeight": 450,
         "center": true,
         "visible": true
       }
