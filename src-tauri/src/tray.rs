@@ -88,6 +88,10 @@ pub fn setup_tray(app: &AppHandle, state: Arc<Mutex<SchedulerState>>) -> tauri::
             }
         })
         .on_tray_icon_event(|tray, event| {
+            // On Windows, left-click shows the menu by default (system behavior)
+            // Our handler would conflict, causing menu to flash and disappear
+            // So we only handle left-click on macOS/Linux for convenience
+            #[cfg(not(target_os = "windows"))]
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
                 button_state: MouseButtonState::Up,
