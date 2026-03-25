@@ -89,16 +89,46 @@ pub fn update_schedules(schedules: Vec<crate::types::Schedule>, state: StateArg)
 
 #[tauri::command]
 pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
+    println!("[Mini-Player] Opening mini-player window...");
+    
     if app.get_webview_window("mini-player").is_none() {
-        WebviewWindowBuilder::new(&app, "mini-player", WebviewUrl::App("/mini-player".into()))
+        println!("[Mini-Player] Creating new window");
+        
+        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", WebviewUrl::App("/mini-player".into()))
             .title("Now Playing")
             .inner_size(380.0, 480.0)
             .resizable(false)
-            .always_on_top(true)
-            .decorations(false)
-            .skip_taskbar(true)
-            .build()?;
+            .always_on_top(true);
+        
+        // Windows compatibility: Keep decorations and taskbar for debugging
+        #[cfg(target_os = "windows")]
+        {
+            builder = builder.decorations(true).skip_taskbar(false);
+        }
+        
+        // macOS/Linux: Use frameless design
+        #[cfg(not(target_os = "windows"))]
+        {
+            builder = builder.decorations(false).skip_taskbar(true);
+        }
+        
+        let window = builder.build()?;
+        
+        println!("[Mini-Player] Window created successfully");
+        
+        // Debug: Log window URL
+        if let Ok(url) = window.url() {
+            println!("[Mini-Player] Window URL: {}", url);
+        }
+        
+        // Debug tools in development builds
+        #[cfg(debug_assertions)]
+        {
+            println!("[Mini-Player] Opening dev tools (debug build)");
+            window.open_devtools();
+        }
     } else if let Some(w) = app.get_webview_window("mini-player") {
+        println!("[Mini-Player] Window already exists, showing it");
         w.show()?;
     }
     Ok(())
