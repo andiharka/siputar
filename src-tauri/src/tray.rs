@@ -109,8 +109,8 @@ pub fn setup_tray(app: &AppHandle, state: Arc<Mutex<SchedulerState>>) -> tauri::
 pub fn update_tray_menu(app: &AppHandle, status: &SchedulerStatus) {
     if let Some(tray) = app.tray_by_id("main") {
         let (label, tooltip) = match status {
-            SchedulerStatus::Active => ("⏸  Jeda Semua Jadwal", "Playback Announcer — Aktif"),
-            SchedulerStatus::Paused => ("▶  Lanjutkan Semua Jadwal", "Playback Announcer — Dijeda"),
+            SchedulerStatus::Active => ("Jeda Semua Jadwal", "Playback Announcer — Aktif"),
+            SchedulerStatus::Paused => ("Lanjutkan Semua Jadwal", "Playback Announcer — Dijeda"),
         };
         let _ = tray.set_tooltip(Some(tooltip));
 
@@ -120,9 +120,9 @@ pub fn update_tray_menu(app: &AppHandle, status: &SchedulerStatus) {
         }
 
         if let Ok(pause_item) = MenuItem::with_id(app, "pause-resume", label, true, None::<&str>) {
-            if let Ok(open_item) = MenuItem::with_id(app, "open", "🪟  Buka Aplikasi", true, None::<&str>) {
+            if let Ok(open_item) = MenuItem::with_id(app, "open", "Buka Aplikasi", true, None::<&str>) {
                 if let Ok(sep) = PredefinedMenuItem::separator(app) {
-                    if let Ok(exit_item) = MenuItem::with_id(app, "exit", "✕  Keluar", true, None::<&str>) {
+                    if let Ok(exit_item) = MenuItem::with_id(app, "exit", "Keluar", true, None::<&str>) {
                         if let Ok(menu) = Menu::with_items(app, &[&pause_item, &open_item, &sep, &exit_item]) {
                             let _ = tray.set_menu(Some(menu));
                         }
