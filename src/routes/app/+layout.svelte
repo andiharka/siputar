@@ -3,7 +3,6 @@
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { configStore } from "$lib/stores/config.svelte.js";
-  import { loadConfig } from "$lib/stores/config.svelte.js";
   import { t } from "$lib/i18n/index.svelte.js";
   import { IconCalendarEvent, IconMicrophone } from "@tabler/icons-svelte";
 
@@ -43,7 +42,10 @@
 <div class="app-shell">
   <header class="header">
     <div class="header-left">
-      <h1 class="app-title">{tr.app.name}</h1>
+      <div style="display: inline-flex; gap: .5rem; align-items: center;">
+        <img src="/app-icon.png" alt="Playback Announcer" class="app-icon" />
+        <h1 class="app-title">{tr.app.name}</h1>
+      </div>
       <nav class="nav-tabs">
         <a
           href="/app/schedules"
@@ -98,6 +100,12 @@
     align-items: center;
     gap: 24px;
     height: 100%;
+  }
+
+  .app-icon {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
   }
 
   .app-title {
