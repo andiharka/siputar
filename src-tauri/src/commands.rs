@@ -94,29 +94,15 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
     if app.get_webview_window("mini-player").is_none() {
         println!("[Mini-Player] Creating new window");
         
-        // Try explicit dev server URL on Windows in dev mode, with fallback to App URL
-        #[cfg(all(target_os = "windows", debug_assertions))]
-        let url = {
-            println!("[Mini-Player] Windows dev mode: trying explicit localhost URL first");
-            match "http://localhost:1420/mini-player".parse() {
-                Ok(parsed_url) => {
-                    println!("[Mini-Player] URL parsed successfully: http://localhost:1420/mini-player");
-                    WebviewUrl::External(parsed_url)
-                }
-                Err(e) => {
-                    eprintln!("[Mini-Player] WARNING: Failed to parse external URL: {}", e);
-                    eprintln!("[Mini-Player] Falling back to App URL protocol");
-                    WebviewUrl::App("/mini-player".into())
-                }
-            }
-        };
-        
-        #[cfg(not(all(target_os = "windows", debug_assertions)))]
+        // Always use App URL protocol - it works consistently across all platforms
+        // The External URL approach (http://localhost:1420) causes blank pages on Windows
+        // because WebView2 handles SPA routing differently than WebKit
         let url = WebviewUrl::App("/mini-player".into());
+        println!("[Mini-Player] Using App URL protocol: /mini-player");
         
         println!("[Mini-Player] Building window with URL...");
         
-        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", url.clone())
+        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", url)
             .title("Now Playing")
             .inner_size(380.0, 480.0)
             .resizable(false)
@@ -144,35 +130,6 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
             Err(e) => {
                 eprintln!("[Mini-Player] ✗ ERROR: Failed to build window: {}", e);
                 eprintln!("[Mini-Player] Error details: {:?}", e);
-                
-                // On Windows dev mode, try fallback to App URL if External URL failed
-                #[cfg(all(target_os = "windows", debug_assertions))]
-                if matches!(url, WebviewUrl::External(_)) {
-                    eprintln!("[Mini-Player] Attempting fallback to App URL protocol...");
-                    let fallback_builder = WebviewWindowBuilder::new(&app, "mini-player", WebviewUrl::App("/mini-player".into()))
-                        .title("Now Playing")
-                        .inner_size(380.0, 480.0)
-                        .resizable(false)
-                        .always_on_top(true)
-                        .visible(true)
-                        .decorations(true)
-                        .skip_taskbar(false);
-                    
-                    match fallback_builder.build() {
-                        Ok(w) => {
-                            println!("[Mini-Player] ✓ Fallback successful - window built with App URL");
-                            w
-                        }
-                        Err(e2) => {
-                            eprintln!("[Mini-Player] ✗ Fallback also failed: {}", e2);
-                            return Err(e); // Return original error
-                        }
-                    }
-                } else {
-                    return Err(e);
-                }
-                
-                #[cfg(not(all(target_os = "windows", debug_assertions)))]
                 return Err(e);
             }
         };
