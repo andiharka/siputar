@@ -2,9 +2,13 @@ use std::sync::{Arc, Mutex};
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    tray::TrayIconBuilder,
     AppHandle, Emitter, Manager,
 };
+
+// These imports are used in conditional compilation for non-Windows platforms
+#[cfg(not(target_os = "windows"))]
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
 
 use crate::{scheduler::SchedulerState, types::SchedulerStatus};
 
