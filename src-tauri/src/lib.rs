@@ -112,6 +112,7 @@ pub fn run() {
             commands::update_schedules,
             commands::open_mini_player,
             commands::close_mini_player,
+            commands::toggle_mini_player_devtools,
             commands::get_app_version,
             commands::check_file_exists,
             // Keychain commands

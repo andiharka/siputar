@@ -94,7 +94,17 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
     if app.get_webview_window("mini-player").is_none() {
         println!("[Mini-Player] Creating new window");
         
-        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", WebviewUrl::App("/mini-player".into()))
+        // Use explicit dev server URL on Windows in dev mode for better compatibility
+        #[cfg(all(target_os = "windows", debug_assertions))]
+        let url = {
+            println!("[Mini-Player] Windows dev mode: using explicit localhost URL");
+            WebviewUrl::External("http://localhost:1420/mini-player".parse().unwrap())
+        };
+        
+        #[cfg(not(all(target_os = "windows", debug_assertions)))]
+        let url = WebviewUrl::App("/mini-player".into());
+        
+        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", url)
             .title("Now Playing")
             .inner_size(380.0, 480.0)
             .resizable(false)
@@ -121,15 +131,46 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
             println!("[Mini-Player] Window URL: {}", url);
         }
         
-        // Debug tools in development builds
+        // Enable DevTools keyboard shortcut (F12) in debug builds
         #[cfg(debug_assertions)]
         {
-            println!("[Mini-Player] Opening dev tools (debug build)");
-            window.open_devtools();
+            use tauri::Listener;
+            
+            println!("[Mini-Player] Setting up DevTools keyboard shortcut (F12)");
+            window.on_window_event(move |event| {
+                if let tauri::WindowEvent::Focused(focused) = event {
+                    if *focused {
+                        println!("[Mini-Player] Window focused");
+                    }
+                }
+            });
+            
+            // Try to open DevTools immediately
+            println!("[Mini-Player] Attempting to open DevTools...");
+            if window.is_devtools_open() {
+                println!("[Mini-Player] DevTools already open");
+            } else {
+                window.open_devtools();
+                println!("[Mini-Player] DevTools open command sent");
+            }
+            
+            // Log navigation events for debugging
+            window.listen("tauri://error", move |event| {
+                println!("[Mini-Player] Tauri error event: {:?}", event.payload());
+            });
         }
     } else if let Some(w) = app.get_webview_window("mini-player") {
         println!("[Mini-Player] Window already exists, showing it");
         w.show()?;
+        
+        // Try to open DevTools if not already open
+        #[cfg(debug_assertions)]
+        {
+            if !w.is_devtools_open() {
+                println!("[Mini-Player] Opening DevTools for existing window");
+                w.open_devtools();
+            }
+        }
     }
     Ok(())
 }
@@ -139,6 +180,20 @@ pub fn close_mini_player(app: AppHandle) {
     if let Some(w) = app.get_webview_window("mini-player") {
         let _ = w.hide();
     }
+}
+
+#[tauri::command]
+pub fn toggle_mini_player_devtools(app: AppHandle) -> tauri::Result<()> {
+    if let Some(window) = app.get_webview_window("mini-player") {
+        if window.is_devtools_open() {
+            window.close_devtools();
+            println!("[Mini-Player] DevTools closed");
+        } else {
+            window.open_devtools();
+            println!("[Mini-Player] DevTools opened");
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]

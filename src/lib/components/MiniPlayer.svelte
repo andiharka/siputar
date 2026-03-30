@@ -2,6 +2,7 @@
   import { onMount, onDestroy, tick } from "svelte";
   import { listen, emit } from "@tauri-apps/api/event";
   import { convertFileSrc } from "@tauri-apps/api/core";
+  import { invoke } from "@tauri-apps/api/core";
   import {
     playbackStore,
     setPlaybackState,
@@ -16,6 +17,8 @@
     IconMusic,
     IconVideo,
   } from "@tabler/icons-svelte";
+
+  console.log("[MiniPlayer] Component initializing...");
 
   let videoEl = $state<HTMLVideoElement | null>(null);
   let audioEl = $state<HTMLAudioElement | null>(null);
@@ -63,6 +66,23 @@
   }
 
   onMount(async () => {
+    console.log("[MiniPlayer] Component mounted");
+    
+    // Add F12 keyboard shortcut for DevTools
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F12") {
+        e.preventDefault();
+        console.log("[MiniPlayer] F12 pressed - toggling DevTools");
+        invoke("toggle_mini_player_devtools").catch((err) => {
+          console.error("[MiniPlayer] Failed to toggle DevTools:", err);
+        });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    
+    // Store cleanup function for onDestroy
+    unlisteners.push(() => window.removeEventListener("keydown", handleKeyDown));
+    
     unlisteners.push(
       await listen<{
         path: string;
@@ -71,6 +91,7 @@
         playlist?: PlaylistItem[];
         currentIndex?: number;
       }>("playback:start", async ({ payload }) => {
+        console.log("[MiniPlayer] playback:start event received:", payload);
         activeType = payload.type;
         if (payload.playlist) {
           playlist = payload.playlist;
@@ -89,23 +110,35 @@
 
         const el = payload.type === "video" ? videoEl : audioEl;
         if (el) {
-          el.src = convertFileSrc(payload.path);
+          const assetUrl = convertFileSrc(payload.path);
+          console.log("[MiniPlayer] Loading media:", payload.path);
+          console.log("[MiniPlayer] Converted URL:", assetUrl);
+          el.src = assetUrl;
           el.volume = payload.volume;
-          el.play().catch(console.error);
+          el.play().catch((err) => {
+            console.error("[MiniPlayer] Failed to play media:", err);
+          });
+        } else {
+          console.error("[MiniPlayer] Media element not found for type:", payload.type);
         }
         scrollToActive();
       }),
       await listen("playback:pause", () => {
+        console.log("[MiniPlayer] playback:pause event received");
         setPlaybackState({ status: "paused" });
         activeEl()?.pause();
       }),
       await listen("playback:resume", () => {
+        console.log("[MiniPlayer] playback:resume event received");
         setPlaybackState({ status: "playing" });
         activeEl()
           ?.play()
-          .catch(() => {});
+          .catch((err) => {
+            console.error("[MiniPlayer] Failed to resume:", err);
+          });
       }),
       await listen("playback:stop", () => {
+        console.log("[MiniPlayer] playback:stop event received");
         setPlaybackState({ status: "idle", mediaPath: null, mediaType: null });
         activeType = null;
         playlist = [];
@@ -128,16 +161,35 @@
   });
 
   function handleEnded() {
+    console.log("[MiniPlayer] Media ended");
     emit("playback:ended", {});
   }
   async function handlePause() {
+    console.log("[MiniPlayer] Pause button clicked");
     await emit("playback:pause", {});
   }
   async function handleResume() {
+    console.log("[MiniPlayer] Resume button clicked");
     await emit("playback:resume", {});
   }
   async function handleStop() {
+    console.log("[MiniPlayer] Stop button clicked");
     await emit("playback:stop", {});
+  }
+
+  function handleMediaError(e: Event) {
+    const target = e.target as HTMLMediaElement;
+    console.error("[MiniPlayer] Media error:", {
+      error: target.error,
+      src: target.src,
+      networkState: target.networkState,
+      readyState: target.readyState,
+    });
+  }
+
+  function handleMediaLoaded(e: Event) {
+    const target = e.target as HTMLMediaElement;
+    console.log("[MiniPlayer] Media loaded successfully:", target.src);
   }
 
   function loopLabel(n: number): string {
@@ -154,6 +206,8 @@
       <video
         bind:this={videoEl}
         onended={handleEnded}
+        onerror={handleMediaError}
+        onloadeddata={handleMediaLoaded}
         style="width:100%;height:100%;object-fit:contain;pointer-events:none;"
       ></video>
       <!-- Transparent overlay so drag-region captures events above video -->
@@ -162,7 +216,12 @@
   {:else}
     <!-- Audio: just a dark placeholder -->
     <div class="media-area audio-placeholder" data-tauri-drag-region>
-      <audio bind:this={audioEl} onended={handleEnded}></audio>
+      <audio 
+        bind:this={audioEl} 
+        onended={handleEnded}
+        onerror={handleMediaError}
+        onloadeddata={handleMediaLoaded}
+      ></audio>
       <!-- keep video bound but hidden -->
       <video bind:this={videoEl} style="display:none;"></video>
       <div class="audio-icon"><IconMusic size={32} color="yellowgreen" /></div>
