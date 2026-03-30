@@ -99,7 +99,7 @@ pub fn run() {
         .on_window_event(|window, event| {
             // Hide window instead of closing when user clicks X
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                if window.label() == "main" {
+                if window.label() == "main" || window.label() == "mini-player" {
                     api.prevent_close();
                     let _ = window.hide();
                 }
@@ -112,6 +112,7 @@ pub fn run() {
             commands::update_schedules,
             commands::open_mini_player,
             commands::close_mini_player,
+            commands::toggle_mini_player_devtools,
             commands::get_app_version,
             commands::check_file_exists,
             // Keychain commands

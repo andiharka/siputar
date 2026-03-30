@@ -89,56 +89,118 @@ pub fn update_schedules(schedules: Vec<crate::types::Schedule>, state: StateArg)
 
 #[tauri::command]
 pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
-    println!("[Mini-Player] Opening mini-player window...");
+    use std::io::Write;
     
-    if app.get_webview_window("mini-player").is_none() {
-        println!("[Mini-Player] Creating new window");
+    println!("[Mini-Player] Opening mini-player window...");
+    let _ = std::io::stdout().flush();
+    
+    // The mini-player window is pre-configured in tauri.conf.json
+    // We just need to show it (it starts hidden)
+    if let Some(window) = app.get_webview_window("mini-player") {
+        println!("[Mini-Player] Found pre-configured window, showing it...");
+        let _ = std::io::stdout().flush();
         
-        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", WebviewUrl::App("/mini-player".into()))
+        window.show()?;
+        window.set_focus()?;
+        
+        println!("[Mini-Player] Window shown successfully");
+        let _ = std::io::stdout().flush();
+        
+        // Log window URL
+        match window.url() {
+            Ok(url) => println!("[Mini-Player] Window URL: {}", url),
+            Err(_) => eprintln!("[Mini-Player] Could not get window URL"),
+        }
+        let _ = std::io::stdout().flush();
+        
+        // Open DevTools in debug builds
+        #[cfg(debug_assertions)]
+        {
+            println!("[Mini-Player] Opening DevTools...");
+            let _ = std::io::stdout().flush();
+            window.open_devtools();
+            println!("[Mini-Player] DevTools command sent");
+            let _ = std::io::stdout().flush();
+        }
+    } else {
+        // Fallback: Create window dynamically if not pre-configured
+        println!("[Mini-Player] Window not found in config, creating dynamically...");
+        let _ = std::io::stdout().flush();
+        
+        // In dev mode use dev server URL, in production use App protocol
+        #[cfg(debug_assertions)]
+        let url = WebviewUrl::External("http://localhost:1420/mini-player".parse().unwrap());
+        
+        #[cfg(not(debug_assertions))]
+        let url = WebviewUrl::App("/mini-player".into());
+        
+        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", url)
             .title("Now Playing")
             .inner_size(380.0, 480.0)
             .resizable(false)
-            .always_on_top(true);
+            .always_on_top(true)
+            .visible(true);
         
-        // Windows compatibility: Keep decorations and taskbar for debugging
         #[cfg(target_os = "windows")]
         {
             builder = builder.decorations(true).skip_taskbar(false);
         }
         
-        // macOS/Linux: Use frameless design
         #[cfg(not(target_os = "windows"))]
         {
             builder = builder.decorations(false).skip_taskbar(true);
         }
         
+        println!("[Mini-Player] Calling builder.build()...");
+        let _ = std::io::stdout().flush();
+        
         let window = builder.build()?;
         
-        println!("[Mini-Player] Window created successfully");
+        println!("[Mini-Player] ✓ Window built successfully!");
+        let _ = std::io::stdout().flush();
         
-        // Debug: Log window URL
-        if let Ok(url) = window.url() {
-            println!("[Mini-Player] Window URL: {}", url);
-        }
-        
-        // Debug tools in development builds
         #[cfg(debug_assertions)]
         {
-            println!("[Mini-Player] Opening dev tools (debug build)");
             window.open_devtools();
         }
-    } else if let Some(w) = app.get_webview_window("mini-player") {
-        println!("[Mini-Player] Window already exists, showing it");
-        w.show()?;
     }
+    
+    println!("[Mini-Player] Setup complete");
+    let _ = std::io::stdout().flush();
     Ok(())
 }
 
 #[tauri::command]
-pub fn close_mini_player(app: AppHandle) {
+pub fn close_mini_player(app: AppHandle) -> tauri::Result<()> {
+    use std::io::Write;
+    
+    println!("[Mini-Player] Hiding mini-player window...");
+    let _ = std::io::stdout().flush();
+    
     if let Some(w) = app.get_webview_window("mini-player") {
-        let _ = w.hide();
+        // Hide instead of close() to preserve the pre-configured window
+        // This allows the window to be shown again without recreating it
+        w.hide()?;
+        println!("[Mini-Player] Window hidden successfully");
+    } else {
+        println!("[Mini-Player] Window not found");
     }
+    let _ = std::io::stdout().flush();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn toggle_mini_player_devtools(app: AppHandle) -> tauri::Result<()> {
+    if let Some(window) = app.get_webview_window("mini-player") {
+        if window.is_devtools_open() {
+            window.close_devtools();
+            println!("[Mini-Player] DevTools closed");
+        } else {
+            window.open_devtools();
+            println!("[Mini-Player] DevTools opened");
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]
