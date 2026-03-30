@@ -144,13 +144,14 @@
         playlist = [];
         currentIndex = 0;
         durations = {};
+        // Clear media elements without triggering load() error
         if (videoEl) {
-          videoEl.src = "";
-          videoEl.load();
+          videoEl.pause();
+          videoEl.removeAttribute("src");
         }
         if (audioEl) {
-          audioEl.src = "";
-          audioEl.load();
+          audioEl.pause();
+          audioEl.removeAttribute("src");
         }
       }),
     );
