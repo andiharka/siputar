@@ -94,21 +94,34 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
     if app.get_webview_window("mini-player").is_none() {
         println!("[Mini-Player] Creating new window");
         
-        // Use explicit dev server URL on Windows in dev mode for better compatibility
+        // Try explicit dev server URL on Windows in dev mode, with fallback to App URL
         #[cfg(all(target_os = "windows", debug_assertions))]
         let url = {
-            println!("[Mini-Player] Windows dev mode: using explicit localhost URL");
-            WebviewUrl::External("http://localhost:1420/mini-player".parse().unwrap())
+            println!("[Mini-Player] Windows dev mode: trying explicit localhost URL first");
+            match "http://localhost:1420/mini-player".parse() {
+                Ok(parsed_url) => {
+                    println!("[Mini-Player] URL parsed successfully: http://localhost:1420/mini-player");
+                    WebviewUrl::External(parsed_url)
+                }
+                Err(e) => {
+                    eprintln!("[Mini-Player] WARNING: Failed to parse external URL: {}", e);
+                    eprintln!("[Mini-Player] Falling back to App URL protocol");
+                    WebviewUrl::App("/mini-player".into())
+                }
+            }
         };
         
         #[cfg(not(all(target_os = "windows", debug_assertions)))]
         let url = WebviewUrl::App("/mini-player".into());
         
-        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", url)
+        println!("[Mini-Player] Building window with URL...");
+        
+        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", url.clone())
             .title("Now Playing")
             .inner_size(380.0, 480.0)
             .resizable(false)
-            .always_on_top(true);
+            .always_on_top(true)
+            .visible(true); // Ensure window is visible
         
         // Windows compatibility: Keep decorations and taskbar for debugging
         #[cfg(target_os = "windows")]
@@ -122,13 +135,55 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
             builder = builder.decorations(false).skip_taskbar(true);
         }
         
-        let window = builder.build()?;
+        println!("[Mini-Player] Calling builder.build()...");
+        let window = match builder.build() {
+            Ok(w) => {
+                println!("[Mini-Player] ✓ Window built successfully");
+                w
+            }
+            Err(e) => {
+                eprintln!("[Mini-Player] ✗ ERROR: Failed to build window: {}", e);
+                eprintln!("[Mini-Player] Error details: {:?}", e);
+                
+                // On Windows dev mode, try fallback to App URL if External URL failed
+                #[cfg(all(target_os = "windows", debug_assertions))]
+                if matches!(url, WebviewUrl::External(_)) {
+                    eprintln!("[Mini-Player] Attempting fallback to App URL protocol...");
+                    let fallback_builder = WebviewWindowBuilder::new(&app, "mini-player", WebviewUrl::App("/mini-player".into()))
+                        .title("Now Playing")
+                        .inner_size(380.0, 480.0)
+                        .resizable(false)
+                        .always_on_top(true)
+                        .visible(true)
+                        .decorations(true)
+                        .skip_taskbar(false);
+                    
+                    match fallback_builder.build() {
+                        Ok(w) => {
+                            println!("[Mini-Player] ✓ Fallback successful - window built with App URL");
+                            w
+                        }
+                        Err(e2) => {
+                            eprintln!("[Mini-Player] ✗ Fallback also failed: {}", e2);
+                            return Err(e); // Return original error
+                        }
+                    }
+                } else {
+                    return Err(e);
+                }
+                
+                #[cfg(not(all(target_os = "windows", debug_assertions)))]
+                return Err(e);
+            }
+        };
         
         println!("[Mini-Player] Window created successfully");
         
         // Debug: Log window URL
         if let Ok(url) = window.url() {
             println!("[Mini-Player] Window URL: {}", url);
+        } else {
+            eprintln!("[Mini-Player] WARNING: Could not get window URL");
         }
         
         // Enable DevTools keyboard shortcut (F12) in debug builds
@@ -176,10 +231,15 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
 }
 
 #[tauri::command]
-pub fn close_mini_player(app: AppHandle) {
+pub fn close_mini_player(app: AppHandle) -> tauri::Result<()> {
+    println!("[Mini-Player] Closing mini-player window...");
     if let Some(w) = app.get_webview_window("mini-player") {
-        let _ = w.hide();
+        w.close()?;
+        println!("[Mini-Player] Window closed successfully");
+    } else {
+        println!("[Mini-Player] Window not found (already closed?)");
     }
+    Ok(())
 }
 
 #[tauri::command]

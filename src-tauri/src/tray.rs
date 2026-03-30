@@ -91,7 +91,7 @@ pub fn setup_tray(app: &AppHandle, state: Arc<Mutex<SchedulerState>>) -> tauri::
                 _ => {}
             }
         })
-        .on_tray_icon_event(|tray, event| {
+        .on_tray_icon_event(|_tray, _event| {
             // On Windows, left-click shows the menu by default (system behavior)
             // Our handler would conflict, causing menu to flash and disappear
             // So we only handle left-click on macOS/Linux for convenience
@@ -100,9 +100,9 @@ pub fn setup_tray(app: &AppHandle, state: Arc<Mutex<SchedulerState>>) -> tauri::
                 button: MouseButton::Left,
                 button_state: MouseButtonState::Up,
                 ..
-            } = event
+            } = _event
             {
-                let app = tray.app_handle();
+                let app = _tray.app_handle();
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.show();
                     let _ = window.set_focus();
