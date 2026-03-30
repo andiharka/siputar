@@ -20,6 +20,18 @@
         "minHeight": 450,
         "center": true,
         "visible": true
+      },
+      {
+        "label": "mini-player",
+        "title": "Now Playing",
+        "url": "/mini-player",
+        "width": 380,
+        "height": 480,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "visible": false,
+        "decorations": true,
+        "skipTaskbar": false
       }
     ],
     "security": {
