@@ -172,13 +172,20 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
 
 #[tauri::command]
 pub fn close_mini_player(app: AppHandle) -> tauri::Result<()> {
-    println!("[Mini-Player] Closing mini-player window...");
+    use std::io::Write;
+    
+    println!("[Mini-Player] Hiding mini-player window...");
+    let _ = std::io::stdout().flush();
+    
     if let Some(w) = app.get_webview_window("mini-player") {
-        w.close()?;
-        println!("[Mini-Player] Window closed successfully");
+        // Hide instead of close() to preserve the pre-configured window
+        // This allows the window to be shown again without recreating it
+        w.hide()?;
+        println!("[Mini-Player] Window hidden successfully");
     } else {
-        println!("[Mini-Player] Window not found (already closed?)");
+        println!("[Mini-Player] Window not found");
     }
+    let _ = std::io::stdout().flush();
     Ok(())
 }
 
