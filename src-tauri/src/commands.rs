@@ -154,14 +154,14 @@ pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
         println!("[Mini-Player] Calling builder.build()...");
         let _ = std::io::stdout().flush();
         
-        let window = builder.build()?;
+        let _window = builder.build()?;
         
         println!("[Mini-Player] ✓ Window built successfully!");
         let _ = std::io::stdout().flush();
         
         #[cfg(debug_assertions)]
         {
-            window.open_devtools();
+            _window.open_devtools();
         }
     }
     
@@ -191,14 +191,22 @@ pub fn close_mini_player(app: AppHandle) -> tauri::Result<()> {
 
 #[tauri::command]
 pub fn toggle_mini_player_devtools(app: AppHandle) -> tauri::Result<()> {
-    if let Some(window) = app.get_webview_window("mini-player") {
-        if window.is_devtools_open() {
-            window.close_devtools();
-            println!("[Mini-Player] DevTools closed");
-        } else {
-            window.open_devtools();
-            println!("[Mini-Player] DevTools opened");
+    #[cfg(debug_assertions)]
+    {
+        if let Some(window) = app.get_webview_window("mini-player") {
+            if window.is_devtools_open() {
+                window.close_devtools();
+                println!("[Mini-Player] DevTools closed");
+            } else {
+                window.open_devtools();
+                println!("[Mini-Player] DevTools opened");
+            }
         }
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        let _ = app; // Suppress unused variable warning
+        println!("[Mini-Player] DevTools not available in release builds");
     }
     Ok(())
 }
