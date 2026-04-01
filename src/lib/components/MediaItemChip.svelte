@@ -9,7 +9,11 @@
   } from "$lib/utils/thumbnail.js";
   import { openPanel } from "$lib/stores/ui.svelte.js";
   import { validationStore } from "$lib/stores/config.svelte.js";
-  import { IconChevronLeft, IconChevronRight } from "@tabler/icons-svelte";
+  import {
+    IconChevronLeft,
+    IconChevronRight,
+    IconPencil,
+  } from "@tabler/icons-svelte";
   import { formatDuration } from "$lib/utils/duration.js";
 
   let {
@@ -100,6 +104,11 @@
         >
       </div>
     {/if}
+
+    <!-- Edit hint (visible on hover) -->
+    <div class="edit-hint">
+      <IconPencil size={24} stroke={1.5} />
+    </div>
   </div>
   <div class="info">
     <span class="name" title={fileName}>{fileName}</span>
@@ -184,6 +193,31 @@
   }
   .chip:hover .move-overlay {
     opacity: 1;
+  }
+
+  /* Edit hint — pencil icon on hover */
+  .edit-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    opacity: 0;
+    transition: 0.15s;
+  }
+  .chip:hover .edit-hint {
+    opacity: 1;
+  }
+  .edit-hint:hover {
+    background: white;
+    scale: 1.1;
   }
 
   .move-btn {
