@@ -2,14 +2,19 @@
   import "../../app.css";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
+  import { invoke } from "@tauri-apps/api/core";
   import { configStore } from "$lib/stores/config.svelte.js";
   import { t } from "$lib/i18n/index.svelte.js";
-  import { IconCalendarEvent, IconMicrophone } from "@tabler/icons-svelte";
+  import { IconCalendarEvent, IconMicrophone, IconPlayerPlay } from "@tabler/icons-svelte";
 
   let { children } = $props();
 
   const tr = $derived(t());
   const currentPath = $derived($page.url.pathname);
+
+  async function openMiniPlayer() {
+    await invoke("open_mini_player").catch(() => {});
+  }
 
   // Apply theme to <html> element
   $effect(() => {
@@ -65,6 +70,12 @@
         </a>
       </nav>
     </div>
+    <div class="header-right">
+      <button class="mini-player-btn" onclick={openMiniPlayer} title={tr.nav.miniPlayer}>
+        <IconPlayerPlay size={16} />
+        <span>{tr.nav.miniPlayer}</span>
+      </button>
+    </div>
   </header>
 
   <main class="main-content">
@@ -88,6 +99,7 @@
   .header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 0 20px;
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
@@ -100,6 +112,33 @@
     align-items: center;
     gap: 24px;
     height: 100%;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mini-player-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .mini-player-btn:hover {
+    color: var(--color-text);
+    background: var(--color-surface-3);
+    border-color: var(--color-border-hover);
   }
 
   .app-icon {

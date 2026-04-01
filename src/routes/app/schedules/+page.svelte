@@ -140,6 +140,10 @@
     const { emit } = await import("@tauri-apps/api/event");
     const item = playQueue[index];
     if (!item) return;
+    
+    // Ensure mini-player window stays visible when changing media
+    await invoke("open_mini_player").catch(() => {});
+    
     setPlaybackState({
       mediaPath: item.path,
       mediaType: item.type,

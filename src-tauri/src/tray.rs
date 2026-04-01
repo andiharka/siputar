@@ -41,11 +41,12 @@ fn load_tray_icon(app: &AppHandle, status: &SchedulerStatus) -> Option<Image<'st
 
 pub fn setup_tray(app: &AppHandle, state: Arc<Mutex<SchedulerState>>) -> tauri::Result<()> {
     let pause_item = MenuItem::with_id(app, "pause-resume", "Jeda Semua Jadwal", true, None::<&str>)?;
+    let mini_player_item = MenuItem::with_id(app, "show-mini-player", "Tampilkan Mini Player", true, None::<&str>)?;
     let open_item = MenuItem::with_id(app, "open", "Buka Aplikasi", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
     let exit_item = MenuItem::with_id(app, "exit", "Keluar", true, None::<&str>)?;
 
-    let menu = Menu::with_items(app, &[&pause_item, &open_item, &sep, &exit_item])?;
+    let menu = Menu::with_items(app, &[&pause_item, &mini_player_item, &open_item, &sep, &exit_item])?;
 
     let mut builder = TrayIconBuilder::with_id("main")
         .menu(&menu)
@@ -78,6 +79,12 @@ pub fn setup_tray(app: &AppHandle, state: Arc<Mutex<SchedulerState>>) -> tauri::
                         "status": new_status,
                     }));
                     update_tray_menu(app, &new_status);
+                }
+                "show-mini-player" => {
+                    if let Some(window) = app.get_webview_window("mini-player") {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
                 }
                 "open" => {
                     if let Some(window) = app.get_webview_window("main") {
@@ -128,11 +135,13 @@ pub fn update_tray_menu(app: &AppHandle, status: &SchedulerStatus) {
         }
 
         if let Ok(pause_item) = MenuItem::with_id(app, "pause-resume", label, true, None::<&str>) {
-            if let Ok(open_item) = MenuItem::with_id(app, "open", "Buka Aplikasi", true, None::<&str>) {
-                if let Ok(sep) = PredefinedMenuItem::separator(app) {
-                    if let Ok(exit_item) = MenuItem::with_id(app, "exit", "Keluar", true, None::<&str>) {
-                        if let Ok(menu) = Menu::with_items(app, &[&pause_item, &open_item, &sep, &exit_item]) {
-                            let _ = tray.set_menu(Some(menu));
+            if let Ok(mini_player_item) = MenuItem::with_id(app, "show-mini-player", "Tampilkan Mini Player", true, None::<&str>) {
+                if let Ok(open_item) = MenuItem::with_id(app, "open", "Buka Aplikasi", true, None::<&str>) {
+                    if let Ok(sep) = PredefinedMenuItem::separator(app) {
+                        if let Ok(exit_item) = MenuItem::with_id(app, "exit", "Keluar", true, None::<&str>) {
+                            if let Ok(menu) = Menu::with_items(app, &[&pause_item, &mini_player_item, &open_item, &sep, &exit_item]) {
+                                let _ = tray.set_menu(Some(menu));
+                            }
                         }
                     }
                 }
