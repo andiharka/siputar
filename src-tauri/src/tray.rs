@@ -12,20 +12,15 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
 
 use crate::{scheduler::SchedulerState, types::SchedulerStatus};
 
+#[cfg(not(target_os = "macos"))]
 #[derive(Debug, Clone, Copy)]
 enum SystemTheme {
     Light,
     Dark,
 }
 
+#[cfg(not(target_os = "macos"))]
 fn detect_system_theme() -> SystemTheme {
-    #[cfg(target_os = "macos")]
-    {
-        // On macOS, we'll use template images which auto-adapt
-        // Return Light as default since template images handle the theme
-        SystemTheme::Light
-    }
-    
     #[cfg(target_os = "windows")]
     {
         use std::ptr;
@@ -94,11 +89,6 @@ fn detect_system_theme() -> SystemTheme {
         }
         
         // Default to light theme
-        SystemTheme::Light
-    }
-    
-    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-    {
         SystemTheme::Light
     }
 }
