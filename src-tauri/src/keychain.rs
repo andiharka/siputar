@@ -30,8 +30,16 @@ pub fn save_api_key(key: &str) -> Result<(), String> {
     
     println!("[Keychain] ✓ API key saved to platform keychain");
     
-    // Verify the save worked by immediately reading it back
-    match entry.get_password() {
+    // Verify the save worked by immediately reading it back with a FRESH Entry
+    // Using a new Entry instance bypasses any internal caching
+    let verify_entry = Entry::new(SERVICE_NAME, ACCOUNT_NAME)
+        .map_err(|e| {
+            let err_msg = format!("Failed to create verification entry: {}", e);
+            eprintln!("[Keychain] ERROR: {}", err_msg);
+            err_msg
+        })?;
+    
+    match verify_entry.get_password() {
         Ok(saved_key) => {
             if saved_key == key {
                 println!("[Keychain] ✓ Verification PASSED: Read back matches saved key");
