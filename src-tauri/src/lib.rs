@@ -1,3 +1,4 @@
+mod activity_log;
 mod commands;
 mod elevenlabs;
 mod keychain;
@@ -77,6 +78,11 @@ pub fn run() {
         .setup(move |app| {
             let handle = app.handle().clone();
 
+            // Initialize activity logger
+            if let Ok(app_data_dir) = app.path().app_data_dir() {
+                activity_log::init(app_data_dir);
+            }
+
             // Initialize SQLite database
             let db = init_database(app)?;
             app.manage(Arc::new(Mutex::new(db)));
@@ -110,6 +116,9 @@ pub fn run() {
             commands::pause_all,
             commands::resume_all,
             commands::update_schedules,
+            commands::log_schedule_create,
+            commands::log_schedule_update,
+            commands::log_schedule_delete,
             commands::open_mini_player,
             commands::close_mini_player,
             commands::toggle_mini_player_devtools,
@@ -133,6 +142,11 @@ pub fn run() {
             commands::delete_tts_item,
             commands::sync_elevenlabs_history,
             commands::open_audio_folder,
+            // Activity log commands
+            commands::get_activity_logs,
+            commands::clear_activity_logs,
+            commands::get_log_file_path,
+            commands::open_log_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

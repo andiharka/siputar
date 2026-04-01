@@ -11,11 +11,11 @@
   import MediaItemChip from "./MediaItemChip.svelte";
   import { formatDuration, calcTotalDuration } from "$lib/utils/duration.js";
   import {
-    IconSettings,
     IconTrash,
     IconDisc,
     IconPlus,
     IconBellRinging,
+    IconBellOff,
     IconPencil,
   } from "@tabler/icons-svelte";
 
@@ -89,19 +89,19 @@
 
 <article class="card" class:disabled={!schedule.enabled} class:highlight>
   <div class="card-header">
-    <div class="time-block">
-      <IconBellRinging
-        size={18}
-        stroke={2}
-        color={schedule.enabled ? "var(--color-primary)" : "#555"}
-      />
+    <button class="time-block" type="button" onclick={handleOpenSettings}>
+      {#if schedule.enabled}
+        <IconBellRinging size={18} stroke={2} color="var(--color-primary)" />
+      {:else}
+        <IconBellOff size={18} stroke={2} color="#555" />
+      {/if}
       <span class="time">{schedule.time}</span>
       {#if !schedule.enabled}
         <span class="badge">Off</span>
       {/if}
-    </div>
+    </button>
 
-    <div class="days">
+    <button class="days" type="button" onclick={handleOpenSettings}>
       {#each DAY_NUMS as day}
         <span
           class="badge"
@@ -110,7 +110,7 @@
           >{tr.days[day as 1 | 2 | 3 | 4 | 5 | 6 | 7]}</span
         >
       {/each}
-    </div>
+    </button>
 
     <div class="header-actions">
       {#if totalDuration > 0}
@@ -210,6 +210,16 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    border-radius: var(--radius-md, 8px);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .time-block:hover {
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   }
   .time {
     font-size: 22px;
@@ -223,6 +233,16 @@
     display: flex;
     gap: 4px;
     flex-wrap: wrap;
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: var(--radius-md, 8px);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .days:hover {
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   }
 
   .header-actions {

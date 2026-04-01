@@ -3,8 +3,15 @@
   import { t } from '$lib/i18n/index.svelte.js';
   import { invoke } from '@tauri-apps/api/core';
   import { open } from '@tauri-apps/plugin-dialog';
-  import { IconCheck, IconX, IconLoader, IconFolder } from '@tabler/icons-svelte';
+  import { IconCheck, IconX, IconLoader, IconFolder, IconTrash, IconFolderOpen, IconChevronDown, IconChevronUp } from '@tabler/icons-svelte';
   import { onMount } from 'svelte';
+
+  interface ActivityLogEntry {
+    ts: string;
+    cat: string;
+    act: string;
+    data: Record<string, unknown>;
+  }
 
   const tr = $derived(t());
   const hasApiKey = $derived(configStore.settings.hasApiKey);
@@ -15,6 +22,18 @@
   let testStatus = $state<'idle' | 'testing' | 'success' | 'failed'>('idle');
   let testError = $state<string | null>(null);
   let showApiKeyInput = $state(false);
+
+  // Activity log state
+  let activityLogs = $state<ActivityLogEntry[]>([]);
+  let showActivityLog = $state(false);
+  let logFilter = $state<'all' | 'schedule' | 'voice' | 'playback'>('all');
+  let loadingLogs = $state(false);
+
+  const filteredLogs = $derived(
+    logFilter === 'all' 
+      ? activityLogs 
+      : activityLogs.filter(log => log.cat === logFilter)
+  );
 
   // Verify keychain state on mount only - using onMount instead of $effect
   onMount(() => {
@@ -131,6 +150,65 @@
         updateSettings({ ttsAudioFolder: selected });
       }
     } catch { /* cancelled or error */ }
+  }
+
+  async function loadActivityLogs() {
+    loadingLogs = true;
+    try {
+      activityLogs = await invoke<ActivityLogEntry[]>('get_activity_logs', { limit: 100, offset: 0 });
+    } catch (e) {
+      console.error('Failed to load activity logs:', e);
+    } finally {
+      loadingLogs = false;
+    }
+  }
+
+  async function handleClearLogs() {
+    if (!confirm(tr.settings.activityLog.confirmClear)) return;
+    try {
+      await invoke('clear_activity_logs');
+      activityLogs = [];
+    } catch (e) {
+      console.error('Failed to clear logs:', e);
+    }
+  }
+
+  async function handleOpenLogFolder() {
+    try {
+      await invoke('open_log_folder');
+    } catch (e) {
+      console.error('Failed to open log folder:', e);
+    }
+  }
+
+  function toggleActivityLog() {
+    showActivityLog = !showActivityLog;
+    if (showActivityLog && activityLogs.length === 0) {
+      loadActivityLogs();
+    }
+  }
+
+  function formatLogTime(ts: string): string {
+    const date = new Date(ts);
+    return date.toLocaleString();
+  }
+
+  function formatLogAction(cat: string, act: string): string {
+    const labels: Record<string, Record<string, string>> = {
+      schedule: { create: tr.settings.activityLog.scheduleCreate, update: tr.settings.activityLog.scheduleUpdate, delete: tr.settings.activityLog.scheduleDelete },
+      voice: { generate: tr.settings.activityLog.voiceGenerate, delete: tr.settings.activityLog.voiceDelete, play: tr.settings.activityLog.voicePlay },
+      playback: { running: tr.settings.activityLog.playbackRunning, paused: tr.settings.activityLog.playbackPaused, stopped: tr.settings.activityLog.playbackStopped },
+    };
+    return labels[cat]?.[act] || `${cat}:${act}`;
+  }
+
+  function getCategoryColor(cat: string): string {
+    switch (cat) {
+      case 'schedule': return 'var(--color-primary)';
+      case 'voice': return '#10b981';
+      case 'playback': return '#f59e0b';
+      default: return 'var(--color-text-muted)';
+    }
   }
 </script>
 
@@ -265,6 +343,68 @@
     </div>
     <span class="field-hint">{tr.settings.audioFolderHint}</span>
   </div>
+
+  <hr class="divider" />
+
+  <!-- Activity Log -->
+  <div class="activity-log-section">
+    <button class="activity-log-header" onclick={toggleActivityLog}>
+      <span class="subsection-title">{tr.settings.activityLog.title}</span>
+      {#if showActivityLog}
+        <IconChevronUp size={16} />
+      {:else}
+        <IconChevronDown size={16} />
+      {/if}
+    </button>
+
+    {#if showActivityLog}
+      <div class="activity-log-content">
+        <div class="activity-log-toolbar">
+          <div class="filter-group">
+            <select class="select-small" bind:value={logFilter}>
+              <option value="all">{tr.settings.activityLog.filterAll}</option>
+              <option value="schedule">{tr.settings.activityLog.filterSchedule}</option>
+              <option value="voice">{tr.settings.activityLog.filterVoice}</option>
+              <option value="playback">{tr.settings.activityLog.filterPlayback}</option>
+            </select>
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn-ghost btn-sm" onclick={loadActivityLogs} disabled={loadingLogs}>
+              {#if loadingLogs}
+                <IconLoader size={14} class="spinning" />
+              {/if}
+              {tr.settings.activityLog.refresh}
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick={handleOpenLogFolder}>
+              <IconFolderOpen size={14} />
+              {tr.settings.activityLog.openFolder}
+            </button>
+            <button class="btn btn-ghost btn-sm btn-danger-text" onclick={handleClearLogs}>
+              <IconTrash size={14} />
+              {tr.settings.activityLog.clear}
+            </button>
+          </div>
+        </div>
+
+        <div class="activity-log-list">
+          {#if filteredLogs.length === 0}
+            <div class="empty-state">{tr.settings.activityLog.empty}</div>
+          {:else}
+            {#each filteredLogs as log}
+              <div class="log-entry">
+                <span class="log-time">{formatLogTime(log.ts)}</span>
+                <span class="log-category" style="color: {getCategoryColor(log.cat)}">{log.cat}</span>
+                <span class="log-action">{formatLogAction(log.cat, log.act)}</span>
+                {#if log.data && Object.keys(log.data).length > 0}
+                  <span class="log-data">{JSON.stringify(log.data)}</span>
+                {/if}
+              </div>
+            {/each}
+          {/if}
+        </div>
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -367,5 +507,118 @@
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+  }
+
+  /* Activity Log Styles */
+  .activity-log-section {
+    margin-top: 8px;
+  }
+
+  .activity-log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--color-text);
+  }
+
+  .activity-log-header .subsection-title {
+    margin-bottom: 0;
+  }
+
+  .activity-log-content {
+    margin-top: 16px;
+  }
+
+  .activity-log-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .select-small {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 4px;
+  }
+
+  .activity-log-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+  }
+
+  .empty-state {
+    padding: 24px;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 13px;
+  }
+
+  .log-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 12px;
+  }
+
+  .log-entry:last-child {
+    border-bottom: none;
+  }
+
+  .log-time {
+    color: var(--color-text-muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .log-category {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  :global([data-theme='dark']) .log-category {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .log-action {
+    color: var(--color-text);
+  }
+
+  .log-data {
+    color: var(--color-text-muted);
+    font-family: monospace;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
   }
 </style>

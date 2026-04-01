@@ -3,6 +3,7 @@ use tauri::{AppHandle, Emitter};
 use tokio::time::{sleep, Duration};
 use chrono::{Local, Datelike, Timelike};
 
+use crate::activity_log;
 use crate::types::{Schedule, SchedulerStatus};
 
 pub struct SchedulerState {
@@ -94,6 +95,7 @@ pub fn start_scheduler(app: AppHandle, state: Arc<Mutex<SchedulerState>>) {
                 }
 
                 if now_time.starts_with(&schedule.time) {
+                    activity_log::log_playback_running(Some(&schedule.id));
                     let _ = app.emit("scheduler:play", serde_json::json!({
                         "scheduleId": schedule.id,
                     }));
