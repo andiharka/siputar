@@ -26,6 +26,9 @@
     } else {
       html.setAttribute("data-theme", theme);
     }
+    
+    // Refresh tray icon to match system theme
+    invoke("refresh_tray_icon").catch(() => {});
   });
 
   // Watch system theme changes when in auto mode
@@ -37,6 +40,8 @@
           "data-theme",
           e.matches ? "dark" : "light",
         );
+        // Refresh tray icon when system theme changes
+        invoke("refresh_tray_icon").catch(() => {});
       }
     };
     mq.addEventListener("change", handler);

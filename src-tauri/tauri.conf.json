@@ -61,7 +61,13 @@
     ],
     "resources": [
       "icons/tray-active.png",
-      "icons/tray-paused.png"
+      "icons/tray-paused.png",
+      "icons/tray-activeTemplate.png",
+      "icons/tray-pausedTemplate.png",
+      "icons/tray-active-light.png",
+      "icons/tray-paused-light.png",
+      "icons/tray-active-dark.png",
+      "icons/tray-paused-dark.png"
     ]
   }
 }

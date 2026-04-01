@@ -46,4 +46,5 @@ keyring = { version = "3", features = ["sync-secret-service"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 keyring = { version = "3", features = ["windows-native"] }
+winapi = { version = "0.3", features = ["winreg", "winnt", "winerror"] }
 

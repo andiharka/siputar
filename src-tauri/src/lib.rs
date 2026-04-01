@@ -115,6 +115,7 @@ pub fn run() {
             commands::toggle_mini_player_devtools,
             commands::get_app_version,
             commands::check_file_exists,
+            commands::refresh_tray_icon,
             // Keychain commands
             commands::save_api_key,
             commands::get_api_key_masked,
