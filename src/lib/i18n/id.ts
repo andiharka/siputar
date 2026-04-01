@@ -2,7 +2,7 @@ export interface DayNames { 1: string; 2: string; 3: string; 4: string; 5: strin
 
 export interface Translations {
   app: { name: string };
-  nav: { schedules: string; audio: string };
+  nav: { schedules: string; audio: string; miniPlayer: string };
   schedule: { title: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string };
   media: { title: string; addMedia: string; loopCount: string; volume: string; fileMissing: string; noMedia: string; deleteConfirm: string; loopForever: string };
   settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string; apiKey: string; apiKeyPlaceholder: string; apiKeyHint: string; testConnection: string; testSuccess: string; testFailed: string; audioFolder: string; audioFolderHint: string; browse: string };
@@ -16,7 +16,7 @@ export interface Translations {
 
 export const id: Translations = {
   app: { name: 'Disperpusip Bersuara' },
-  nav: { schedules: 'Daftar Jadwal', audio: 'Buat Audio' },
+  nav: { schedules: 'Daftar Jadwal', audio: 'Buat Audio', miniPlayer: 'Mini Player' },
   schedule: {
     title: 'Jadwal',
     addSchedule: 'Tambah Jadwal',

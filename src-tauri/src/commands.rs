@@ -607,3 +607,10 @@ pub fn open_audio_folder(file_path: String) -> Result<(), String> {
 
     Ok(())
 }
+
+#[tauri::command]
+pub fn refresh_tray_icon(app: AppHandle, state: StateArg<'_>) -> Result<(), String> {
+    let status = state.lock().map_err(|e| e.to_string())?.status.clone();
+    crate::tray::refresh_tray_icon(&app, &status);
+    Ok(())
+}
