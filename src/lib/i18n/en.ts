@@ -17,6 +17,9 @@ export const en: Translations = {
     addNotification: 'Add Notification',
     minutesBefore: 'minutes before',
     deleteConfirm: 'Delete this schedule and all its media?',
+    hours: 'Hours',
+    minutes: 'Minutes',
+    seconds: 'Seconds',
   },
   media: {
     title: 'Media',
