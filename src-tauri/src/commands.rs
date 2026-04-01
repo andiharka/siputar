@@ -5,6 +5,7 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use crate::{
+    activity_log,
     scheduler::SchedulerState,
     tray::update_tray_menu,
     types::SchedulerStatus,
@@ -66,6 +67,7 @@ pub fn pause_all(app: AppHandle, state: StateArg) {
     if let Ok(mut s) = state.lock() {
         s.status = SchedulerStatus::Paused;
     }
+    activity_log::log_playback_paused();
     let _ = app.emit("tray:status-changed", serde_json::json!({ "status": "paused" }));
     update_tray_menu(&app, &SchedulerStatus::Paused);
 }
@@ -75,6 +77,7 @@ pub fn resume_all(app: AppHandle, state: StateArg) {
     if let Ok(mut s) = state.lock() {
         s.status = SchedulerStatus::Active;
     }
+    activity_log::log_playback_running(None);
     let _ = app.emit("tray:status-changed", serde_json::json!({ "status": "active" }));
     update_tray_menu(&app, &SchedulerStatus::Active);
 }
@@ -85,6 +88,21 @@ pub fn update_schedules(schedules: Vec<crate::types::Schedule>, state: StateArg)
         s.schedules = schedules;
         s.notified.clear(); // reset triggered set when config changes
     }
+}
+
+#[tauri::command]
+pub fn log_schedule_create(id: String, time: String) {
+    activity_log::log_schedule_create(&id, &time);
+}
+
+#[tauri::command]
+pub fn log_schedule_update(id: String, changes: String) {
+    activity_log::log_schedule_update(&id, &changes);
+}
+
+#[tauri::command]
+pub fn log_schedule_delete(id: String) {
+    activity_log::log_schedule_delete(&id);
 }
 
 #[tauri::command]
@@ -386,6 +404,9 @@ pub async fn generate_speech(
         ).map_err(|e| e.to_string())?;
     }
 
+    // Log voice generation
+    activity_log::log_voice_generate(&id, &request.text, &request.voice_name);
+
     // Spawn background task to generate speech
     let client = Arc::clone(&*client);
     let db = Arc::clone(&*db);
@@ -499,6 +520,9 @@ pub async fn delete_tts_item(
     client: ElevenLabsArg<'_>,
     db: DbArg<'_>,
 ) -> Result<(), String> {
+    // Log voice deletion
+    activity_log::log_voice_delete(&id);
+
     // Delete local file if exists
     {
         let conn = db.lock().map_err(|e| e.to_string())?;
@@ -612,5 +636,58 @@ pub fn open_audio_folder(file_path: String) -> Result<(), String> {
 pub fn refresh_tray_icon(app: AppHandle, state: StateArg<'_>) -> Result<(), String> {
     let status = state.lock().map_err(|e| e.to_string())?.status.clone();
     crate::tray::refresh_tray_icon(&app, &status);
+    Ok(())
+}
+
+// Activity Log commands
+#[tauri::command]
+pub fn get_activity_logs(limit: usize, offset: usize) -> Vec<activity_log::ActivityLogEntry> {
+    activity_log::get_logs(limit, offset)
+}
+
+#[tauri::command]
+pub fn clear_activity_logs() -> Result<(), String> {
+    activity_log::clear_logs()
+}
+
+#[tauri::command]
+pub fn get_log_file_path() -> Option<String> {
+    activity_log::get_log_file_path()
+}
+
+#[tauri::command]
+pub fn open_log_folder() -> Result<(), String> {
+    let path = activity_log::get_log_file_path()
+        .ok_or("Log path not available")?;
+    
+    let folder = std::path::Path::new(&path)
+        .parent()
+        .map(|p| p.to_string_lossy().to_string())
+        .ok_or("Could not get log folder")?;
+    
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&folder)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&folder)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&folder)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
     Ok(())
 }

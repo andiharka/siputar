@@ -1,11 +1,33 @@
 export interface DayNames { 1: string; 2: string; 3: string; 4: string; 5: string; 6: string; 7: string; fullName: { 1: string; 2: string; 3: string; 4: string; 5: string; 6: string; 7: string }; }
 
+export interface ActivityLogTranslations {
+  title: string;
+  filterAll: string;
+  filterSchedule: string;
+  filterVoice: string;
+  filterPlayback: string;
+  refresh: string;
+  openFolder: string;
+  clear: string;
+  confirmClear: string;
+  empty: string;
+  scheduleCreate: string;
+  scheduleUpdate: string;
+  scheduleDelete: string;
+  voiceGenerate: string;
+  voiceDelete: string;
+  voicePlay: string;
+  playbackRunning: string;
+  playbackPaused: string;
+  playbackStopped: string;
+}
+
 export interface Translations {
   app: { name: string };
   nav: { schedules: string; audio: string; miniPlayer: string };
   schedule: { title: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string };
   media: { title: string; addMedia: string; loopCount: string; volume: string; fileMissing: string; noMedia: string; deleteConfirm: string; loopForever: string };
-  settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string; apiKey: string; apiKeyPlaceholder: string; apiKeyHint: string; testConnection: string; testSuccess: string; testFailed: string; audioFolder: string; audioFolderHint: string; browse: string };
+  settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string; apiKey: string; apiKeyPlaceholder: string; apiKeyHint: string; testConnection: string; testSuccess: string; testFailed: string; audioFolder: string; audioFolderHint: string; browse: string; activityLog: ActivityLogTranslations };
   actions: { save: string; revert: string; close: string; edit: string; delete: string; add: string; play: string; cancel: string; confirm: string; moveUp: string; moveDown: string; generate: string; download: string; openFolder: string; stop: string };
   tts: { title: string; generateAudio: string; credits: string; creditsRemaining: string; connectionOnline: string; connectionOffline: string; text: string; textPlaceholder: string; charLimit: string; voice: string; voicePlaceholder: string; model: string; modelPlaceholder: string; language: string; speed: string; speedHint: string; stability: string; stabilityHint: string; similarity: string; similarityHint: string; generating: string; completed: string; failed: string; noHistory: string; deleteConfirm: string; downloadSuccess: string; downloadFailed: string; offline: string; sync: string; syncing: string };
   days: DayNames;
@@ -59,6 +81,27 @@ export const id: Translations = {
     audioFolder: 'Folder Audio TTS',
     audioFolderHint: 'Lokasi penyimpanan file audio yang dihasilkan',
     browse: 'Pilih Folder',
+    activityLog: {
+      title: 'Log Aktivitas',
+      filterAll: 'Semua',
+      filterSchedule: 'Jadwal',
+      filterVoice: 'Suara',
+      filterPlayback: 'Pemutaran',
+      refresh: 'Refresh',
+      openFolder: 'Buka Folder',
+      clear: 'Hapus',
+      confirmClear: 'Hapus semua log aktivitas?',
+      empty: 'Belum ada aktivitas tercatat',
+      scheduleCreate: 'Jadwal dibuat',
+      scheduleUpdate: 'Jadwal diperbarui',
+      scheduleDelete: 'Jadwal dihapus',
+      voiceGenerate: 'Audio dibuat',
+      voiceDelete: 'Audio dihapus',
+      voicePlay: 'Audio diputar',
+      playbackRunning: 'Pemutaran dimulai',
+      playbackPaused: 'Pemutaran dijeda',
+      playbackStopped: 'Pemutaran dihentikan',
+    },
   },
   actions: {
     save: 'Simpan Perubahan',
