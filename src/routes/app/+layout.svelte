@@ -5,7 +5,11 @@
   import { invoke } from "@tauri-apps/api/core";
   import { configStore } from "$lib/stores/config.svelte.js";
   import { t } from "$lib/i18n/index.svelte.js";
-  import { IconCalendarEvent, IconMicrophone, IconPlayerPlay } from "@tabler/icons-svelte";
+  import {
+    IconCalendarEvent,
+    IconMicrophone,
+    IconPlayerPlay,
+  } from "@tabler/icons-svelte";
 
   let { children } = $props();
 
@@ -26,7 +30,7 @@
     } else {
       html.setAttribute("data-theme", theme);
     }
-    
+
     // Refresh tray icon to match system theme
     invoke("refresh_tray_icon").catch(() => {});
   });
@@ -76,7 +80,11 @@
       </nav>
     </div>
     <div class="header-right">
-      <button class="mini-player-btn" onclick={openMiniPlayer} title={tr.nav.miniPlayer}>
+      <button
+        class="mini-player-btn"
+        onclick={openMiniPlayer}
+        title={tr.nav.miniPlayer}
+      >
         <IconPlayerPlay size={16} />
         <span>{tr.nav.miniPlayer}</span>
       </button>
@@ -133,7 +141,7 @@
     font-size: 13px;
     font-weight: 500;
     color: var(--color-text-muted);
-    background: var(--color-surface-2);
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 6px;
     cursor: pointer;
@@ -142,8 +150,7 @@
 
   .mini-player-btn:hover {
     color: var(--color-text);
-    background: var(--color-surface-3);
-    border-color: var(--color-border-hover);
+    background: var(--color-surface-2);
   }
 
   .app-icon {
