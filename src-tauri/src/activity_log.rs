@@ -171,6 +171,7 @@ pub fn get_log_file_path() -> Option<String> {
     get_log_path().map(|p| p.to_string_lossy().to_string())
 }
 
+#[allow(dead_code)]
 pub fn export_logs(destination: PathBuf) -> Result<(), String> {
     let _log_path = match get_log_path() {
         Some(p) => p,
@@ -231,6 +232,7 @@ pub fn log_voice_delete(id: &str) {
     }));
 }
 
+#[allow(dead_code)]
 pub fn log_voice_play(id: &str, file_path: &str) {
     log_event("voice", "play", serde_json::json!({
         "id": id,
@@ -248,6 +250,7 @@ pub fn log_playback_paused() {
     log_event("playback", "paused", serde_json::json!({}));
 }
 
+#[allow(dead_code)]
 pub fn log_playback_stopped() {
     log_event("playback", "stopped", serde_json::json!({}));
 }

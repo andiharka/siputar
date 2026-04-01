@@ -3215,7 +3215,7 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "playback-announcer"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "dirs 6.0.0",
