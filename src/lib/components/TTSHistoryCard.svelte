@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n/index.svelte.js";
+  import { convertFileSrc } from "@tauri-apps/api/core";
   import {
     ttsStore,
     downloadAudio,
@@ -93,9 +94,7 @@
       window.dispatchEvent(event);
     }
 
-    audioElement = new Audio(
-      `asset://localhost/${encodeURIComponent(item.localFilePath)}`,
-    );
+    audioElement = new Audio(convertFileSrc(item.localFilePath));
     audioElement.onended = () => {
       ttsStore.playingId = null;
     };
