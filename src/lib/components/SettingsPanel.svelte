@@ -1,10 +1,23 @@
 <script lang="ts">
-  import { configStore, updateSettings, saveConfig } from '$lib/stores/config.svelte.js';
-  import { t } from '$lib/i18n/index.svelte.js';
-  import { invoke } from '@tauri-apps/api/core';
-  import { open } from '@tauri-apps/plugin-dialog';
-  import { IconCheck, IconX, IconLoader, IconFolder, IconTrash, IconFolderOpen, IconChevronDown, IconChevronUp } from '@tabler/icons-svelte';
-  import { onMount } from 'svelte';
+  import {
+    configStore,
+    updateSettings,
+    saveConfig,
+  } from "$lib/stores/config.svelte.js";
+  import { t } from "$lib/i18n/index.svelte.js";
+  import { invoke } from "@tauri-apps/api/core";
+  import { open } from "@tauri-apps/plugin-dialog";
+  import {
+    IconCheck,
+    IconX,
+    IconLoader,
+    IconFolder,
+    IconTrash,
+    IconFolderOpen,
+    IconChevronDown,
+    IconChevronUp,
+  } from "@tabler/icons-svelte";
+  import { onMount } from "svelte";
 
   interface ActivityLogEntry {
     ts: string;
@@ -17,22 +30,22 @@
   const hasApiKey = $derived(configStore.settings.hasApiKey);
   const audioFolder = $derived(configStore.settings.ttsAudioFolder);
 
-  let apiKeyInput = $state('');
-  let maskedApiKey = $state('');
-  let testStatus = $state<'idle' | 'testing' | 'success' | 'failed'>('idle');
+  let apiKeyInput = $state("");
+  let maskedApiKey = $state("");
+  let testStatus = $state<"idle" | "testing" | "success" | "failed">("idle");
   let testError = $state<string | null>(null);
   let showApiKeyInput = $state(false);
 
   // Activity log state
   let activityLogs = $state<ActivityLogEntry[]>([]);
   let showActivityLog = $state(false);
-  let logFilter = $state<'all' | 'schedule' | 'voice' | 'playback'>('all');
+  let logFilter = $state<"all" | "schedule" | "voice" | "playback">("all");
   let loadingLogs = $state(false);
 
   const filteredLogs = $derived(
-    logFilter === 'all' 
-      ? activityLogs 
-      : activityLogs.filter(log => log.cat === logFilter)
+    logFilter === "all"
+      ? activityLogs
+      : activityLogs.filter((log) => log.cat === logFilter),
   );
 
   // Verify keychain state on mount only - using onMount instead of $effect
@@ -43,17 +56,17 @@
   async function verifyAndLoadApiKey() {
     try {
       // Check if API key actually exists in keychain
-      const exists = await invoke<boolean>('has_api_key');
-      
+      const exists = await invoke<boolean>("has_api_key");
+
       if (hasApiKey && !exists) {
         // Config says we have a key, but keychain doesn't - sync the state
-        console.warn('Config out of sync with keychain - resetting hasApiKey');
+        console.warn("Config out of sync with keychain - resetting hasApiKey");
         updateSettings({ hasApiKey: false });
         await saveConfig();
-        maskedApiKey = '';
+        maskedApiKey = "";
       } else if (exists) {
         // Load the masked key for display
-        const masked = await invoke<string | null>('get_api_key_masked');
+        const masked = await invoke<string | null>("get_api_key_masked");
         if (masked) {
           maskedApiKey = masked;
           // Ensure config is in sync
@@ -63,10 +76,10 @@
           }
         }
       } else {
-        maskedApiKey = '';
+        maskedApiKey = "";
       }
     } catch (e) {
-      console.error('Failed to verify API key:', e);
+      console.error("Failed to verify API key:", e);
     }
   }
 
@@ -75,67 +88,72 @@
     updateSettings({ runOnStartup: checked });
     try {
       if (checked) {
-        await invoke('plugin:autostart|enable');
+        await invoke("plugin:autostart|enable");
       } else {
-        await invoke('plugin:autostart|disable');
+        await invoke("plugin:autostart|disable");
       }
-    } catch { /* not in Tauri context during dev */ }
+    } catch {
+      /* not in Tauri context during dev */
+    }
   }
 
   async function handleTestConnection() {
     if (!apiKeyInput.trim()) return;
-    
-    testStatus = 'testing';
+
+    testStatus = "testing";
     testError = null;
     try {
       // First test if the key is valid
-      const valid = await invoke<boolean>('test_api_key', { key: apiKeyInput.trim() });
-      
+      const valid = await invoke<boolean>("test_api_key", {
+        key: apiKeyInput.trim(),
+      });
+
       if (!valid) {
-        testStatus = 'failed';
-        testError = 'Invalid API key';
+        testStatus = "failed";
+        testError = "Invalid API key";
         return;
       }
-      
+
       // Key is valid, now save to keychain
       try {
-        await invoke('save_api_key', { key: apiKeyInput.trim() });
+        await invoke("save_api_key", { key: apiKeyInput.trim() });
       } catch (saveError) {
-        testStatus = 'failed';
+        testStatus = "failed";
         testError = `Failed to save: ${saveError instanceof Error ? saveError.message : String(saveError)}`;
-        console.error('Failed to save API key to keychain:', saveError);
+        console.error("Failed to save API key to keychain:", saveError);
         return;
       }
-      
+
       // Update config
       updateSettings({ hasApiKey: true });
       await saveConfig();
-      
+
       // Success - hide input
-      testStatus = 'success';
+      testStatus = "success";
       showApiKeyInput = false;
-      apiKeyInput = '';
-      
+      apiKeyInput = "";
+
       // Wait a moment for keychain to fully persist, then reload
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await verifyAndLoadApiKey();
-      
     } catch (e) {
-      testStatus = 'failed';
+      testStatus = "failed";
       testError = e instanceof Error ? e.message : String(e);
-      console.error('Test connection failed:', e);
+      console.error("Test connection failed:", e);
     }
   }
 
   async function handleRemoveApiKey() {
     try {
-      await invoke('delete_api_key');
+      await invoke("delete_api_key");
       updateSettings({ hasApiKey: false });
       await saveConfig();
-      maskedApiKey = '';
-      apiKeyInput = '';
+      maskedApiKey = "";
+      apiKeyInput = "";
       showApiKeyInput = false;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function handleBrowseFolder() {
@@ -145,19 +163,24 @@
         multiple: false,
         title: tr.settings.audioFolder,
       });
-      
-      if (selected && typeof selected === 'string') {
+
+      if (selected && typeof selected === "string") {
         updateSettings({ ttsAudioFolder: selected });
       }
-    } catch { /* cancelled or error */ }
+    } catch {
+      /* cancelled or error */
+    }
   }
 
   async function loadActivityLogs() {
     loadingLogs = true;
     try {
-      activityLogs = await invoke<ActivityLogEntry[]>('get_activity_logs', { limit: 100, offset: 0 });
+      activityLogs = await invoke<ActivityLogEntry[]>("get_activity_logs", {
+        limit: 100,
+        offset: 0,
+      });
     } catch (e) {
-      console.error('Failed to load activity logs:', e);
+      console.error("Failed to load activity logs:", e);
     } finally {
       loadingLogs = false;
     }
@@ -166,18 +189,18 @@
   async function handleClearLogs() {
     if (!confirm(tr.settings.activityLog.confirmClear)) return;
     try {
-      await invoke('clear_activity_logs');
+      await invoke("clear_activity_logs");
       activityLogs = [];
     } catch (e) {
-      console.error('Failed to clear logs:', e);
+      console.error("Failed to clear logs:", e);
     }
   }
 
   async function handleOpenLogFolder() {
     try {
-      await invoke('open_log_folder');
+      await invoke("open_log_folder");
     } catch (e) {
-      console.error('Failed to open log folder:', e);
+      console.error("Failed to open log folder:", e);
     }
   }
 
@@ -195,19 +218,35 @@
 
   function formatLogAction(cat: string, act: string): string {
     const labels: Record<string, Record<string, string>> = {
-      schedule: { create: tr.settings.activityLog.scheduleCreate, update: tr.settings.activityLog.scheduleUpdate, delete: tr.settings.activityLog.scheduleDelete },
-      voice: { generate: tr.settings.activityLog.voiceGenerate, delete: tr.settings.activityLog.voiceDelete, play: tr.settings.activityLog.voicePlay },
-      playback: { running: tr.settings.activityLog.playbackRunning, paused: tr.settings.activityLog.playbackPaused, stopped: tr.settings.activityLog.playbackStopped },
+      schedule: {
+        create: tr.settings.activityLog.scheduleCreate,
+        update: tr.settings.activityLog.scheduleUpdate,
+        delete: tr.settings.activityLog.scheduleDelete,
+      },
+      voice: {
+        generate: tr.settings.activityLog.voiceGenerate,
+        delete: tr.settings.activityLog.voiceDelete,
+        play: tr.settings.activityLog.voicePlay,
+      },
+      playback: {
+        running: tr.settings.activityLog.playbackRunning,
+        paused: tr.settings.activityLog.playbackPaused,
+        stopped: tr.settings.activityLog.playbackStopped,
+      },
     };
     return labels[cat]?.[act] || `${cat}:${act}`;
   }
 
   function getCategoryColor(cat: string): string {
     switch (cat) {
-      case 'schedule': return 'var(--color-primary)';
-      case 'voice': return '#10b981';
-      case 'playback': return '#f59e0b';
-      default: return 'var(--color-text-muted)';
+      case "schedule":
+        return "var(--color-primary)";
+      case "voice":
+        return "#10b981";
+      case "playback":
+        return "#f59e0b";
+      default:
+        return "var(--color-text-muted)";
     }
   }
 </script>
@@ -219,14 +258,15 @@
   <div class="field">
     <span class="field-label">{tr.settings.theme}</span>
     <div class="radio-group">
-      {#each [['light', tr.settings.themeLight], ['dark', tr.settings.themeDark], ['auto', tr.settings.themeAuto]] as [val, label]}
+      {#each [["light", tr.settings.themeLight], ["dark", tr.settings.themeDark], ["auto", tr.settings.themeAuto]] as [val, label]}
         <label class="radio-item">
           <input
             type="radio"
             name="theme"
             value={val}
             checked={configStore.settings.theme === val}
-            onchange={() => updateSettings({ theme: val as 'light' | 'dark' | 'auto' })}
+            onchange={() =>
+              updateSettings({ theme: val as "light" | "dark" | "auto" })}
           />
           <span>{label}</span>
         </label>
@@ -240,17 +280,21 @@
     <div class="radio-group">
       <label class="radio-item">
         <input
-          type="radio" name="lang" value="id"
-          checked={configStore.settings.language === 'id'}
-          onchange={() => updateSettings({ language: 'id' })}
+          type="radio"
+          name="lang"
+          value="id"
+          checked={configStore.settings.language === "id"}
+          onchange={() => updateSettings({ language: "id" })}
         />
         <span>Bahasa Indonesia</span>
       </label>
       <label class="radio-item">
         <input
-          type="radio" name="lang" value="en"
-          checked={configStore.settings.language === 'en'}
-          onchange={() => updateSettings({ language: 'en' })}
+          type="radio"
+          name="lang"
+          value="en"
+          checked={configStore.settings.language === "en"}
+          onchange={() => updateSettings({ language: "en" })}
         />
         <span>English</span>
       </label>
@@ -274,17 +318,23 @@
 
   <!-- ElevenLabs API Key -->
   <h4 class="subsection-title">ElevenLabs TTS</h4>
-  
+
   <div class="field">
     <span class="field-label">{tr.settings.apiKey}</span>
-    
+
     {#if hasApiKey && !showApiKeyInput}
       <div class="api-key-display">
         <span class="masked-key">{maskedApiKey}</span>
-        <button class="btn btn-ghost btn-sm" onclick={() => showApiKeyInput = true}>
+        <button
+          class="btn btn-ghost btn-sm"
+          onclick={() => (showApiKeyInput = true)}
+        >
           Change
         </button>
-        <button class="btn btn-ghost btn-sm btn-danger-text" onclick={handleRemoveApiKey}>
+        <button
+          class="btn btn-ghost btn-sm btn-danger-text"
+          onclick={handleRemoveApiKey}
+        >
           Remove
         </button>
       </div>
@@ -299,23 +349,23 @@
         <button
           class="btn btn-primary"
           onclick={handleTestConnection}
-          disabled={!apiKeyInput.trim() || testStatus === 'testing'}
+          disabled={!apiKeyInput.trim() || testStatus === "testing"}
         >
-          {#if testStatus === 'testing'}
+          {#if testStatus === "testing"}
             <IconLoader size={14} class="spinning" />
-          {:else if testStatus === 'success'}
+          {:else if testStatus === "success"}
             <IconCheck size={14} />
-          {:else if testStatus === 'failed'}
+          {:else if testStatus === "failed"}
             <IconX size={14} />
           {/if}
           {tr.settings.testConnection}
         </button>
       </div>
       <span class="field-hint">{tr.settings.apiKeyHint}</span>
-      
-      {#if testStatus === 'success'}
+
+      {#if testStatus === "success"}
         <div class="status-message success">{tr.settings.testSuccess}</div>
-      {:else if testStatus === 'failed'}
+      {:else if testStatus === "failed"}
         <div class="status-message error">
           {tr.settings.testFailed}
           {#if testError}
@@ -363,25 +413,38 @@
           <div class="filter-group">
             <select class="select-small" bind:value={logFilter}>
               <option value="all">{tr.settings.activityLog.filterAll}</option>
-              <option value="schedule">{tr.settings.activityLog.filterSchedule}</option>
-              <option value="voice">{tr.settings.activityLog.filterVoice}</option>
-              <option value="playback">{tr.settings.activityLog.filterPlayback}</option>
+              <option value="schedule"
+                >{tr.settings.activityLog.filterSchedule}</option
+              >
+              <option value="voice"
+                >{tr.settings.activityLog.filterVoice}</option
+              >
+              <option value="playback"
+                >{tr.settings.activityLog.filterPlayback}</option
+              >
             </select>
           </div>
           <div class="action-buttons">
-            <button class="btn btn-ghost btn-sm" onclick={loadActivityLogs} disabled={loadingLogs}>
+            <button
+              class="btn btn-ghost btn-sm"
+              onclick={loadActivityLogs}
+              disabled={loadingLogs}
+            >
               {#if loadingLogs}
                 <IconLoader size={14} class="spinning" />
               {/if}
               {tr.settings.activityLog.refresh}
             </button>
+          </div>
+          <div>
             <button class="btn btn-ghost btn-sm" onclick={handleOpenLogFolder}>
               <IconFolderOpen size={14} />
-              {tr.settings.activityLog.openFolder}
             </button>
-            <button class="btn btn-ghost btn-sm btn-danger-text" onclick={handleClearLogs}>
+            <button
+              class="btn btn-ghost btn-sm btn-danger-text"
+              onclick={handleClearLogs}
+            >
               <IconTrash size={14} />
-              {tr.settings.activityLog.clear}
             </button>
           </div>
         </div>
@@ -393,8 +456,13 @@
             {#each filteredLogs as log}
               <div class="log-entry">
                 <span class="log-time">{formatLogTime(log.ts)}</span>
-                <span class="log-category" style="color: {getCategoryColor(log.cat)}">{log.cat}</span>
-                <span class="log-action">{formatLogAction(log.cat, log.act)}</span>
+                <span
+                  class="log-category"
+                  style="color: {getCategoryColor(log.cat)}">{log.cat}</span
+                >
+                <span class="log-action"
+                  >{formatLogAction(log.cat, log.act)}</span
+                >
                 {#if log.data && Object.keys(log.data).length > 0}
                   <span class="log-data">{JSON.stringify(log.data)}</span>
                 {/if}
@@ -408,18 +476,62 @@
 </div>
 
 <style>
-  .settings { padding: 4px 0; }
-  .section-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
-  .subsection-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--color-text); }
-  .field { margin-bottom: 20px; }
-  .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-  .field-hint { display: block; font-size: 11px; color: var(--color-text-muted); margin-top: 6px; }
-  .field-row { display: flex; align-items: center; justify-content: space-between; }
-  .field-row .field-label { margin-bottom: 0; }
-  .radio-group { display: flex; flex-direction: column; gap: 8px; }
-  .radio-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
-  .radio-item input { accent-color: var(--color-primary); }
-  
+  .settings {
+    padding: 4px 0;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .subsection-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--color-text);
+  }
+  .field {
+    margin-bottom: 20px;
+  }
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .field-hint {
+    display: block;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-top: 6px;
+  }
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .field-row .field-label {
+    margin-bottom: 0;
+  }
+  .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .radio-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .radio-item input {
+    accent-color: var(--color-primary);
+  }
+
   .divider {
     border: none;
     border-top: 1px solid var(--color-border);
@@ -490,12 +602,12 @@
     color: #991b1b;
   }
 
-  :global([data-theme='dark']) .status-message.success {
+  :global([data-theme="dark"]) .status-message.success {
     background: #166534;
     color: #dcfce7;
   }
 
-  :global([data-theme='dark']) .status-message.error {
+  :global([data-theme="dark"]) .status-message.error {
     background: #991b1b;
     color: #fee2e2;
   }
@@ -505,8 +617,12 @@
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* Activity Log Styles */
@@ -604,7 +720,7 @@
     background: rgba(0, 0, 0, 0.1);
   }
 
-  :global([data-theme='dark']) .log-category {
+  :global([data-theme="dark"]) .log-category {
     background: rgba(255, 255, 255, 0.1);
   }
 

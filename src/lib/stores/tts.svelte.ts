@@ -126,12 +126,12 @@ export async function syncWithElevenLabs(): Promise<void> {
 
 export async function generateSpeech(request: TTSGenerateRequest): Promise<void> {
   closePanel();
-  
+
   try {
     const item = await invoke<TTSHistoryItem>('generate_speech', { request });
     _generatingId = item.id;
     _history = [item, ..._history];
-    
+
     // Poll for completion or listen for events
     await waitForGeneration(item.id);
   } catch (e) {
@@ -147,11 +147,11 @@ async function waitForGeneration(id: string): Promise<void> {
   const maxAttempts = 60; // 60 seconds max
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     try {
       const history = await invoke<TTSHistoryItem[]>('get_tts_history');
       const item = history.find(h => h.id === id);
-      
+
       if (item) {
         _history = history;
         if (item.status === 'completed' || item.status === 'failed') {

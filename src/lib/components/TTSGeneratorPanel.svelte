@@ -1,12 +1,20 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { fade } from 'svelte/transition';
-  import { t } from '$lib/i18n/index.svelte.js';
-  import { uiStore, closeTTSPanel } from '$lib/stores/ui.svelte.js';
-  import { ttsStore, loadVoices, loadModels, generateSpeech } from '$lib/stores/tts.svelte.js';
-  import { configStore } from '$lib/stores/config.svelte.js';
-  import type { TTSGenerateRequest, ElevenLabsModel } from '$lib/types/index.js';
-  import { IconX, IconLoader } from '@tabler/icons-svelte';
+  import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
+  import { t } from "$lib/i18n/index.svelte.js";
+  import { uiStore, closeTTSPanel } from "$lib/stores/ui.svelte.js";
+  import {
+    ttsStore,
+    loadVoices,
+    loadModels,
+    generateSpeech,
+  } from "$lib/stores/tts.svelte.js";
+  import { configStore } from "$lib/stores/config.svelte.js";
+  import type {
+    TTSGenerateRequest,
+    ElevenLabsModel,
+  } from "$lib/types/index.js";
+  import { IconX, IconLoader } from "@tabler/icons-svelte";
 
   const tr = $derived(t());
   const isOpen = $derived(uiStore.ttsPanelOpen);
@@ -14,11 +22,11 @@
   const models = $derived(ttsStore.models);
   const hasApiKey = $derived(configStore.settings.hasApiKey);
 
-  let text = $state('');
-  let voiceId = $state('');
-  let voiceName = $state('');
-  let modelId = $state('');
-  let language = $state('id'); // Default Indonesian
+  let text = $state("");
+  let voiceId = $state("");
+  let voiceName = $state("");
+  let modelId = $state("");
+  let language = $state("id"); // Default Indonesian
   let stability = $state(0.5);
   let similarityBoost = $state(0.75);
   let speed = $state(1.0);
@@ -26,27 +34,32 @@
   let error = $state<string | null>(null);
 
   const selectedModel = $derived<ElevenLabsModel | undefined>(
-    models.find(m => m.model_id === modelId)
+    models.find((m) => m.model_id === modelId),
   );
-  
+
   const maxCharacters = $derived(
-    selectedModel?.max_characters_request_subscribed_user || 5000
+    selectedModel?.max_characters_request_subscribed_user || 5000,
   );
-  
+
   const charCount = $derived(text.length);
-  const charPercent = $derived(Math.min((charCount / maxCharacters) * 100, 100));
+  const charPercent = $derived(
+    Math.min((charCount / maxCharacters) * 100, 100),
+  );
   const isOverLimit = $derived(charCount > maxCharacters);
-  
+
+  // All current ElevenLabs TTS models support voice_settings (stability,
+  // similarity_boost, speed). Only exclude models that are known not to
+  // support them (none currently — so default to true).
   const supportsSettings = $derived(
-    selectedModel?.model_id?.includes('eleven_') ?? true
+    selectedModel ? selectedModel.can_do_text_to_speech : true,
   );
 
   const languages = [
-    { id: 'id', name: 'Indonesian' },
-    { id: 'en', name: 'English' },
-    { id: 'ms', name: 'Malay' },
-    { id: 'jv', name: 'Javanese' },
-    { id: 'su', name: 'Sundanese' },
+    { id: "id", name: "Indonesian" },
+    { id: "en", name: "English" },
+    { id: "ms", name: "Malay" },
+    { id: "jv", name: "Javanese" },
+    { id: "su", name: "Sundanese" },
   ];
 
   onMount(async () => {
@@ -68,8 +81,8 @@
   function handleVoiceChange(e: Event) {
     const select = e.target as HTMLSelectElement;
     voiceId = select.value;
-    const voice = voices.find(v => v.voice_id === voiceId);
-    voiceName = voice?.name || '';
+    const voice = voices.find((v) => v.voice_id === voiceId);
+    voiceName = voice?.name || "";
   }
 
   async function handleGenerate() {
@@ -91,11 +104,11 @@
       };
 
       await generateSpeech(request);
-      
+
       // Reset form
-      text = '';
+      text = "";
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Generation failed';
+      error = e instanceof Error ? e.message : "Generation failed";
     } finally {
       isGenerating = false;
     }
@@ -148,7 +161,8 @@
           ></div>
         </div>
         <span class="char-count" class:error={isOverLimit}>
-          {charCount.toLocaleString()} / {maxCharacters.toLocaleString()} {tr.tts.charLimit}
+          {charCount.toLocaleString()} / {maxCharacters.toLocaleString()}
+          {tr.tts.charLimit}
         </span>
       </div>
     </div>
@@ -172,11 +186,7 @@
     <!-- Model Selection -->
     <div class="field">
       <label class="field-label" for="tts-model">{tr.tts.model}</label>
-      <select
-        id="tts-model"
-        class="select"
-        bind:value={modelId}
-      >
+      <select id="tts-model" class="select" bind:value={modelId}>
         <option value="" disabled>{tr.tts.modelPlaceholder}</option>
         {#each models as model}
           <option value={model.model_id}>{model.name}</option>
@@ -187,11 +197,7 @@
     <!-- Language Selection -->
     <div class="field">
       <label class="field-label" for="tts-language">{tr.tts.language}</label>
-      <select
-        id="tts-language"
-        class="select"
-        bind:value={language}
-      >
+      <select id="tts-language" class="select" bind:value={language}>
         {#each languages as lang}
           <option value={lang.id}>{lang.name}</option>
         {/each}
@@ -199,7 +205,8 @@
     </div>
 
     <!-- Settings Sliders (if model supports) -->
-    {#if supportsSettings}
+    {#if false}
+      <!-- {#if supportsSettings} -->
       <div class="settings-section">
         <h4 class="settings-title">Voice Settings</h4>
 
@@ -224,7 +231,9 @@
         <!-- Stability -->
         <div class="field">
           <div class="field-row">
-            <label class="field-label" for="tts-stability">{tr.tts.stability}</label>
+            <label class="field-label" for="tts-stability"
+              >{tr.tts.stability}</label
+            >
             <span class="field-value">{(stability * 100).toFixed(0)}%</span>
           </div>
           <input
@@ -242,8 +251,12 @@
         <!-- Similarity Boost -->
         <div class="field">
           <div class="field-row">
-            <label class="field-label" for="tts-similarity">{tr.tts.similarity}</label>
-            <span class="field-value">{(similarityBoost * 100).toFixed(0)}%</span>
+            <label class="field-label" for="tts-similarity"
+              >{tr.tts.similarity}</label
+            >
+            <span class="field-value"
+              >{(similarityBoost * 100).toFixed(0)}%</span
+            >
           </div>
           <input
             id="tts-similarity"
@@ -271,7 +284,11 @@
     <button
       class="btn btn-primary"
       onclick={handleGenerate}
-      disabled={!text.trim() || !voiceId || !modelId || isOverLimit || isGenerating}
+      disabled={!text.trim() ||
+        !voiceId ||
+        !modelId ||
+        isOverLimit ||
+        isGenerating}
     >
       {#if isGenerating}
         <IconLoader size={16} class="spinning" />
@@ -481,7 +498,11 @@
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>
