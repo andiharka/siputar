@@ -91,8 +91,12 @@
       await listen("playback:resume", () =>
         setPlaybackState({ status: "playing" }),
       );
+      // playback:stop is only emitted by MiniPlayer's stop button (manual stop)
       await listen("playback:stop", () => {
         setPlaybackState({ status: "idle", scheduleId: null, mediaPath: null });
+        isPlayingSchedule = false;
+        playQueue = [];
+        queueIndex = 0;
         invoke("close_mini_player").catch(() => {});
       });
     })();
@@ -110,6 +114,7 @@
   }[] = [];
   let queueIndex = 0;
   let loopRemaining = 0;
+  let isPlayingSchedule = false; // true while a schedule playlist is active
   let newScheduleId = $state<string | null>(null);
 
   async function startScheduledPlayback(scheduleId: string) {
@@ -125,6 +130,7 @@
     }));
     queueIndex = 0;
     loopRemaining = Math.max(1, playQueue[0]?.loopCount ?? 1);
+    isPlayingSchedule = true;
 
     setPlaybackState({
       status: "playing",
@@ -133,7 +139,8 @@
       currentLoop: 0,
     });
     await invoke("open_mini_player").catch(() => {});
-    setTimeout(() => playQueueItem(0), 800);
+    // Small delay to let the mini-player window initialize before sending media
+    setTimeout(() => playQueueItem(0), 300);
   }
 
   async function playQueueItem(index: number) {
@@ -141,8 +148,9 @@
     const item = playQueue[index];
     if (!item) return;
     
-    // Ensure mini-player window stays visible when changing media
-    await invoke("open_mini_player").catch(() => {});
+    // Don't call open_mini_player here — it's already opened once in
+    // startScheduledPlayback(). Re-calling show()/hide() between tracks
+    // triggers Windows window animations and causes stutter.
     
     setPlaybackState({
       mediaPath: item.path,
@@ -166,6 +174,9 @@
   }
 
   async function advancePlaybackQueue() {
+    // Guard: ignore stale 'ended' events after playlist is done
+    if (!isPlayingSchedule || playQueue.length === 0) return;
+
     loopRemaining--;
     if (loopRemaining > 0) {
       await playQueueItem(queueIndex);
@@ -176,7 +187,14 @@
       loopRemaining = Math.max(1, playQueue[queueIndex].loopCount);
       await playQueueItem(queueIndex);
     } else {
+      // Entire playlist finished — clean up and hide mini-player
+      isPlayingSchedule = false;
+      playQueue = [];
+      queueIndex = 0;
       setPlaybackState({ status: "idle", scheduleId: null, mediaPath: null });
+      // Don't emit playback:stop here — it would create a feedback loop
+      // (the listener calls close_mini_player again, and MiniPlayer removing
+      // src from media elements can re-trigger 'ended' events).
       invoke("close_mini_player").catch(() => {});
     }
   }

@@ -105,6 +105,8 @@ pub struct VoiceSettings {
     pub style: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_speaker_boost: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub speed: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -280,12 +282,15 @@ impl ElevenLabsClient {
         self.rate_limiter.wait().await;
         let api_key = Self::get_api_key()?;
 
-        let voice_settings = if stability.is_some() || similarity_boost.is_some() {
+        // All voice settings (stability, similarity_boost, speed) go in the
+        // voice_settings body — speed is NOT a query parameter.
+        let voice_settings = if stability.is_some() || similarity_boost.is_some() || speed.is_some() {
             Some(VoiceSettings {
                 stability,
                 similarity_boost,
                 style: None,
                 use_speaker_boost: None,
+                speed,
             })
         } else {
             None
@@ -298,14 +303,7 @@ impl ElevenLabsClient {
             voice_settings,
         };
 
-        let mut url = format!("{}/text-to-speech/{}", BASE_URL, voice_id);
-        
-        // Add speed as query parameter if provided
-        if let Some(s) = speed {
-            url = format!("{}?output_format=mp3_44100_128&speed={}", url, s);
-        } else {
-            url = format!("{}?output_format=mp3_44100_128", url);
-        }
+        let url = format!("{}/text-to-speech/{}?output_format=mp3_44100_128", BASE_URL, voice_id);
 
         let response = self.client
             .post(&url)

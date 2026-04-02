@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*' # Trigger on version tags like v1.0.0, v0.1.0, etc.
+      - "v*" # Trigger on version tags like v1.0.0, v0.1.0, etc.
 
 jobs:
   create-release:
@@ -73,7 +73,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: "./src-tauri -> target"
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
@@ -90,4 +90,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
+          bundleNameTemplate: "[platform]_[name]_[version]_[arch][ext]"
           args: --verbose

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n/index.svelte.js";
+  import { convertFileSrc } from "@tauri-apps/api/core";
   import {
     ttsStore,
     downloadAudio,
@@ -93,9 +94,7 @@
       window.dispatchEvent(event);
     }
 
-    audioElement = new Audio(
-      `asset://localhost/${encodeURIComponent(item.localFilePath)}`,
-    );
+    audioElement = new Audio(convertFileSrc(item.localFilePath));
     audioElement.onended = () => {
       ttsStore.playingId = null;
     };
@@ -146,7 +145,12 @@
 
 <div class="card" class:generating={isGenerating}>
   <div class="card-content">
-    <div class="text-preview">{truncateText(item.text)}</div>
+    <div class="text-preview-wrap">
+      <div class="text-preview">{truncateText(item.text)}</div>
+      {#if item.text.length > 100}
+        <div class="text-full-tooltip">{item.text}</div>
+      {/if}
+    </div>
     <div class="meta">
       <span class="date">{formatDate(item.createdAt)}</span>
       <span class="voice">{item.voiceName}</span>
@@ -255,6 +259,50 @@
   .card-content {
     flex: 1;
     min-width: 0;
+  }
+
+  /* Wrapper that shows the full-text tooltip on hover */
+  .text-preview-wrap {
+    position: relative;
+  }
+  .text-preview-wrap:hover .text-full-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .text-full-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    z-index: 200;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    box-shadow: var(--shadow-md);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-width: 420px;
+    max-height: 200px;
+    overflow-y: auto;
+    /* pointer-events: none; */
+    /* animation */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition:
+      opacity 0.15s ease,
+      visibility 0.15s ease,
+      transform 0.15s ease;
+  }
+  .text-full-tooltip:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
   }
 
   .text-preview {
