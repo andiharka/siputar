@@ -180,7 +180,7 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
 
 - **Frontend**: SvelteKit 5 + Svelte 5 (with runes)
 - **Backend**: Tauri 2 (Rust)
-- **Database**: SQLite (via tauri-plugin-sql)
+- **Database**: JSON & SQLite (via tauri-plugin-sql)
 - **Styling**: Custom CSS with CSS variables
 - **Icons**: Tabler Icons
 - **TTS**: ElevenLabs API
@@ -238,7 +238,8 @@ cargo test --manifest-path src-tauri/Cargo.toml  # Run Rust tests
 - Supports macOS, Windows, and Linux
 
 **Database:**
-- SQLite for schedule and TTS history persistence
+- JSON for schedule persistence
+- SQLite for TTS history persistence
 - Tauri plugin for async database access
 
 **Rate Limiting:**
@@ -353,15 +354,6 @@ See the [LICENSE](LICENSE) file for the full license text or visit [https://www.
 For issues, questions, or feature requests:
 - Open an issue on [GitHub Issues](https://github.com/andiharka/playback-announcer/issues)
 - Check existing issues before creating a new one
-
-## 🗺️ Roadmap
-
-- [ ] Multi-language support expansion
-- [ ] Custom notification sounds
-- [ ] Schedule templates
-- [ ] Export/import schedules
-- [ ] Audio waveform visualization
-- [ ] More TTS provider integrations
 
 ---
 
