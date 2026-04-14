@@ -121,7 +121,7 @@
       {:else if media.loopCount === 0}
         <span class="loop-badge">∞</span>
       {:else if media.loopCount > 1}
-        <span class="loop-badge">x{media.loopCount}</span>
+        <span class="loop-badge">{media.loopCount}x</span>
       {/if}
     </div>
   </div>
