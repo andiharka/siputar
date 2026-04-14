@@ -39,8 +39,6 @@
 
 {#if media}
   <div class="editor">
-    <h3 class="section-title">{tr.media.title}</h3>
-
     <div class="file-path">
       <span class="field-label">File</span>
       <div class="path-display" title={media.path}>

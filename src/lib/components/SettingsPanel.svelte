@@ -252,8 +252,6 @@
 </script>
 
 <div class="settings">
-  <h3 class="section-title">{tr.settings.title}</h3>
-
   <!-- Theme -->
   <div class="field">
     <span class="field-label">{tr.settings.theme}</span>

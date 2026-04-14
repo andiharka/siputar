@@ -121,8 +121,6 @@
 
 {#if schedule}
   <div class="editor">
-    <h3 class="section-title">{tr.schedule.title}</h3>
-
     <!-- Enabled toggle -->
     <div class="field field-row">
       <span class="field-label">{tr.schedule.enabled}</span>
