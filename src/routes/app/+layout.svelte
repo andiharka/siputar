@@ -59,7 +59,7 @@
     <div
       style="display: inline-flex; gap: .5rem; align-items: center; width: 116px"
     >
-      <img src="/app-icon.png" alt="Playback Announcer" class="app-icon" />
+      <img src="/app-icon.png" alt="SIPUTAR" class="app-icon" />
       <div class="app-titles">
         <h1 class="app-title">{tr.app.name}</h1>
         <span class="app-long-title">{tr.app.longName}</span>

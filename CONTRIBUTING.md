@@ -1,6 +1,6 @@
-# Contributing to Playback Announcer
+# Contributing to SIPUTAR
 
-Thank you for your interest in contributing to Playback Announcer! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to SIPUTAR! This document provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 ### Reporting Bugs
 
-1. Check if the bug has already been reported in [Issues](https://github.com/YOURUSERNAME/playback-announcer/issues)
+1. Check if the bug has already been reported in [Issues](https://github.com/YOURUSERNAME/siputar/issues)
 2. If not, create a new issue with:
    - Clear, descriptive title
    - Steps to reproduce
@@ -29,7 +29,7 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 ### Suggesting Features
 
-1. Check if the feature has been requested in [Issues](https://github.com/YOURUSERNAME/playback-announcer/issues)
+1. Check if the feature has been requested in [Issues](https://github.com/YOURUSERNAME/siputar/issues)
 2. Create a new issue with:
    - Clear description of the feature
    - Use cases and benefits
@@ -64,8 +64,8 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 1. **Clone your fork**
    ```bash
-   git clone https://github.com/YOURUSERNAME/playback-announcer.git
-   cd playback-announcer
+   git clone https://github.com/YOURUSERNAME/siputar.git
+   cd siputar
    ```
 
 2. **Install dependencies**
@@ -209,7 +209,7 @@ Once the tag is pushed, GitHub Actions will automatically:
 
 ### 5. Publish Release
 
-1. Go to [Releases](https://github.com/YOURUSERNAME/playback-announcer/releases)
+1. Go to [Releases](https://github.com/YOURUSERNAME/siputar/releases)
 2. Find the newly created draft release
 3. Edit the release notes to add:
    - **What's New** - Major features and improvements
@@ -301,7 +301,7 @@ src-tauri/
 
 If you have questions about contributing:
 
-1. Check existing [Issues](https://github.com/YOURUSERNAME/playback-announcer/issues)
+1. Check existing [Issues](https://github.com/YOURUSERNAME/siputar/issues)
 2. Open a new issue with the "question" label
 3. Reach out to the maintainers
 

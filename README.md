@@ -1,4 +1,4 @@
-# Playback Announcer
+# SIPUTAR (Sistem Informasi Pemutaran Terjadwal) - Scheduled Playback Information System
 
 A desktop application for scheduling and playing multimedia announcements with Text-to-Speech (TTS) integration using ElevenLabs.
 
@@ -6,11 +6,11 @@ A desktop application for scheduling and playing multimedia announcements with T
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![Tauri](https://img.shields.io/badge/Tauri-2.0-orange.svg)
 ![Svelte](https://img.shields.io/badge/Svelte-5.0-red.svg)
-![Build](https://github.com/andiharka/playback-announcer/workflows/Build/badge.svg)
+![Build](https://github.com/andiharka/siputar/workflows/Build/badge.svg)
 
 ## 📋 Overview
 
-Playback Announcer is a cross-platform desktop application designed for scheduling and playing audio/video announcements at specific times. It features a built-in Text-to-Speech system powered by ElevenLabs, allowing you to generate professional voice announcements directly within the app.
+SIPUTAR (Sistem Informasi Pemutaran Terjadwal) - Scheduled Playback Information System is a cross-platform desktop application designed for scheduling and playing audio/video announcements at specific times. It features a built-in Text-to-Speech system powered by ElevenLabs, allowing you to generate professional voice announcements directly within the app.
 
 ### Key Features
 
@@ -37,7 +37,7 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
 
 #### Option 1: Install from Release (Recommended)
 
-1. Go to the [Releases](https://github.com/andiharka/playback-announcer/releases) page and download the latest version
+1. Go to the [Releases](https://github.com/andiharka/siputar/releases) page and download the latest version
 2. Choose the installer for your platform:
    - **macOS**: Download the `.dmg` file
      - Open the `.dmg` file
@@ -45,7 +45,7 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
      - **Important:** GitHub-built apps are unsigned and will show "damaged" error
      - **Fix:** Open Terminal and run:
        ```bash
-       xattr -cr "/Applications/Playback Announcer.app"
+       xattr -cr "/Applications/SIPUTAR.app"
        ```
      - Then double-click the app to launch
      - See [Troubleshooting](#troubleshooting) for details
@@ -54,7 +54,7 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
      - Follow the installation wizard
      - Windows SmartScreen may appear (click "More info" → "Run anyway" for unsigned builds)
    - **Linux**: Download the `.deb` (Debian/Ubuntu) or `.AppImage` (universal)
-     - **Debian/Ubuntu**: `sudo dpkg -i playback-announcer_*.deb`
+     - **Debian/Ubuntu**: `sudo dpkg -i siputar_*.deb`
      - **AppImage**: Make executable (`chmod +x *.AppImage`) then run
 
 > **Note:** Builds are currently unsigned. macOS and Windows will show security warnings. This is normal for open-source apps without paid developer certificates.
@@ -63,8 +63,8 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/andiharka/playback-announcer.git
-   cd playback-announcer
+   git clone https://github.com/andiharka/siputar.git
+   cd siputar
    ```
 
 2. **Install dependencies**
@@ -188,7 +188,7 @@ Playback Announcer is a cross-platform desktop application designed for scheduli
 ### Project Structure
 
 ```
-playback-announcer/
+siputar/
 ├── src/                    # Frontend source
 │   ├── lib/
 │   │   ├── components/    # Svelte components
@@ -269,7 +269,7 @@ This error occurs because GitHub-built apps are not code-signed with an Apple De
 1. Open Terminal
 2. Run this command to remove the quarantine flag:
    ```bash
-   xattr -cr "/Applications/Playback Announcer.app"
+   xattr -cr "/Applications/SIPUTAR.app"
    ```
 3. The app will now open normally
 
@@ -296,8 +296,8 @@ This is normal for unsigned applications. The app is safe to run.
 If the AppImage won't run:
 
 ```bash
-chmod +x playback-announcer_*.AppImage
-./playback-announcer_*.AppImage
+chmod +x siputar_*.AppImage
+./siputar_*.AppImage
 ```
 
 ### ElevenLabs API Key Issues
@@ -317,11 +317,11 @@ chmod +x playback-announcer_*.AppImage
 
 If you encounter database errors, the SQLite file may be corrupted:
 
-**macOS:** `~/Library/Application Support/com.disperpusip.playbackannouncer/`
-**Windows:** `%APPDATA%\com.disperpusip.playbackannouncer\`
-**Linux:** `~/.local/share/com.disperpusip.playbackannouncer/`
+**macOS:** `~/Library/Application Support/com.disperpusip.siputar/`
+**Windows:** `%APPDATA%\com.disperpusip.siputar\`
+**Linux:** `~/.local/share/com.disperpusip.siputar/`
 
-Delete the `playback_announcer.db` file and restart the app.
+Delete the `tts_history.db` file and restart the app.
 
 ## 📄 License
 
@@ -352,7 +352,7 @@ See the [LICENSE](LICENSE) file for the full license text or visit [https://www.
 ## 📞 Support
 
 For issues, questions, or feature requests:
-- Open an issue on [GitHub Issues](https://github.com/andiharka/playback-announcer/issues)
+- Open an issue on [GitHub Issues](https://github.com/andiharka/siputar/issues)
 - Check existing issues before creating a new one
 
 ---

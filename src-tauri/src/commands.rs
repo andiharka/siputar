@@ -480,7 +480,7 @@ fn get_audio_folder(app: &AppHandle) -> String {
         .map(|p| p.join("audio").to_string_lossy().to_string())
         .unwrap_or_else(|_| {
             dirs::document_dir()
-                .map(|p| p.join("PlaybackAnnouncer").join("audio").to_string_lossy().to_string())
+                .map(|p| p.join("SIPUTAR").join("audio").to_string_lossy().to_string())
                 .unwrap_or_else(|| "./audio".to_string())
         })
 }
