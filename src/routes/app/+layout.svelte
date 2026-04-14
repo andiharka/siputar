@@ -125,19 +125,6 @@
     height: 52px;
   }
 
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    height: 100%;
-  }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
   .mini-player-btn {
     display: flex;
     align-items: center;

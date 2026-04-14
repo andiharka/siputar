@@ -373,11 +373,6 @@
   .editor {
     padding: 4px 0;
   }
-  .section-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
   .field {
     margin-bottom: 20px;
   }

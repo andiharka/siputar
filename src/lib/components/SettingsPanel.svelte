@@ -477,11 +477,6 @@
   .settings {
     padding: 4px 0;
   }
-  .section-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
   .subsection-title {
     font-size: 13px;
     font-weight: 600;
