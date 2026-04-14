@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Playback Announcer",
-  "version": "0.2.2",
-  "identifier": "com.disperpusip.playbackannouncer",
+  "productName": "SIPUTAR",
+  "version": "0.3.0",
+  "identifier": "com.disperpusip.siputar",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Playback Announcer",
+        "title": "SIPUTAR",
         "width": 900,
         "height": 600,
         "minWidth": 700,

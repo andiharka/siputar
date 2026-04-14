@@ -252,8 +252,6 @@
 </script>
 
 <div class="settings">
-  <h3 class="section-title">{tr.settings.title}</h3>
-
   <!-- Theme -->
   <div class="field">
     <span class="field-label">{tr.settings.theme}</span>
@@ -479,11 +477,6 @@
   .settings {
     padding: 4px 0;
   }
-  .section-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
   .subsection-title {
     font-size: 13px;
     font-weight: 600;
@@ -682,7 +675,7 @@
     overflow-y: auto;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    background: var(--color-surface-2);
+    background: var(--color-surface-3);
   }
 
   .empty-state {

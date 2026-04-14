@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    playback_announcer_lib::run()
+    siputar_lib::run()
 }

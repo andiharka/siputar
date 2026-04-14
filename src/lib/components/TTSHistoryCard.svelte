@@ -146,6 +146,9 @@
 <div class="card" class:generating={isGenerating}>
   <div class="card-content">
     <div class="text-preview-wrap">
+      {#if item.name}
+        <div class="item-name">{item.name}</div>
+      {/if}
       <div class="text-preview">{truncateText(item.text)}</div>
       {#if item.text.length > 100}
         <div class="text-full-tooltip">{item.text}</div>
@@ -312,6 +315,13 @@
     color: var(--color-text);
   }
 
+  .item-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+  }
+
   .meta {
     display: flex;
     align-items: center;
@@ -326,8 +336,8 @@
 
   .voice {
     font-size: 12px;
-    font-weight: 500;
-    color: var(--color-primary);
+    /* font-weight: 500; */
+    color: var(--color-text-muted);
   }
 
   .badge {

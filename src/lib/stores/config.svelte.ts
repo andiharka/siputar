@@ -91,6 +91,7 @@ export function updateSettings(patch: Partial<AppSettings>): void {
 export function addSchedule(): Schedule {
   const schedule: Schedule = {
     id: uuidv4(),
+    name: 'Jadwal Baru',
     time: '08:00:00',
     activeDays: [...ALL_DAYS],
     notifications: [{ offsetMinutes: 1 }],
@@ -98,18 +99,18 @@ export function addSchedule(): Schedule {
     media: [],
   };
   _config.schedules = [..._config.schedules, schedule];
-  invoke('log_schedule_create', { id: schedule.id, time: schedule.time }).catch(() => {});
+  invoke('log_schedule_create', { id: schedule.id, time: schedule.time }).catch(() => { });
   return schedule;
 }
 
 export function updateSchedule(id: string, patch: Partial<Omit<Schedule, 'id' | 'media'>>): void {
   _config.schedules = _config.schedules.map(s => s.id === id ? { ...s, ...patch } : s);
-  invoke('log_schedule_update', { id, changes: Object.keys(patch).join(', ') }).catch(() => {});
+  invoke('log_schedule_update', { id, changes: Object.keys(patch).join(', ') }).catch(() => { });
 }
 
 export function deleteSchedule(id: string): void {
   _config.schedules = _config.schedules.filter(s => s.id !== id);
-  invoke('log_schedule_delete', { id }).catch(() => {});
+  invoke('log_schedule_delete', { id }).catch(() => { });
 }
 
 export function addNotification(scheduleId: string, rule: NotificationRule): void {

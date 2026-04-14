@@ -17,6 +17,13 @@
   const isOpen = $derived(uiStore.panelOpen);
   const isDirty = $derived(configStore.isDirty);
 
+  const panelTitle = $derived.by(() => {
+    if (sel.type === "settings") return tr.settings.title;
+    if (sel.type === "schedule") return tr.schedule.title;
+    if (sel.type === "media") return tr.media.title;
+    return "";
+  });
+
   async function handleSave() {
     await saveConfig();
     closePanel();
@@ -40,6 +47,7 @@
 
 <aside class="panel" class:open={isOpen}>
   <div class="panel-header">
+    <h3 class="panel-title">{panelTitle}</h3>
     <button class="close-btn" onclick={closePanel} aria-label="Close panel"
       ><IconX size={16} /></button
     >
@@ -99,10 +107,15 @@
   .panel-header {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 12px 16px;
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
+  }
+  .panel-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
   }
   .close-btn {
     background: none;

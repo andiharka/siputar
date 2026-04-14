@@ -23,9 +23,9 @@ export interface ActivityLogTranslations {
 }
 
 export interface Translations {
-  app: { name: string };
+  app: { name: string, longName: string };
   nav: { schedules: string; audio: string; miniPlayer: string };
-  schedule: { title: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string; hours: string; minutes: string; seconds: string };
+  schedule: { title: string; name: string; namePlaceholder: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string; hours: string; minutes: string; seconds: string };
   media: { title: string; addMedia: string; loopCount: string; volume: string; fileMissing: string; noMedia: string; deleteConfirm: string; loopForever: string };
   settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string; apiKey: string; apiKeyPlaceholder: string; apiKeyHint: string; testConnection: string; testSuccess: string; testFailed: string; audioFolder: string; audioFolderHint: string; browse: string; activityLog: ActivityLogTranslations };
   actions: { save: string; revert: string; close: string; edit: string; delete: string; add: string; play: string; cancel: string; confirm: string; moveUp: string; moveDown: string; generate: string; download: string; openFolder: string; stop: string };
@@ -37,10 +37,12 @@ export interface Translations {
 }
 
 export const id: Translations = {
-  app: { name: 'Disperpusip Bersuara' },
+  app: { name: 'SIPUTAR', longName: 'Sistem Informasi Pemutaran Terjadwal' },
   nav: { schedules: 'Daftar Jadwal', audio: 'Buat Audio', miniPlayer: 'Mini Player' },
   schedule: {
     title: 'Jadwal',
+    name: 'Nama Jadwal',
+    namePlaceholder: 'Masukkan nama jadwal',
     addSchedule: 'Tambah Jadwal',
     noSchedules: 'Belum ada jadwal. Klik tombol + untuk menambahkan.',
     time: 'Waktu',

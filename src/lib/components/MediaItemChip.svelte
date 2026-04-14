@@ -121,7 +121,7 @@
       {:else if media.loopCount === 0}
         <span class="loop-badge">∞</span>
       {:else if media.loopCount > 1}
-        <span class="loop-badge">x{media.loopCount}</span>
+        <span class="loop-badge">{media.loopCount}x</span>
       {/if}
     </div>
   </div>
@@ -134,7 +134,7 @@
     cursor: pointer;
     border-radius: var(--radius-md);
     overflow: hidden;
-    background: var(--color-surface-2);
+    background: var(--color-surface-3);
     border: 1px solid var(--color-border);
     transition: var(--transition);
     user-select: none;

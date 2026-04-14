@@ -12,11 +12,11 @@
   import { formatDuration, calcTotalDuration } from "$lib/utils/duration.js";
   import {
     IconTrash,
-    IconDisc,
     IconPlus,
     IconBellRinging,
     IconBellOff,
     IconPencil,
+    IconPlayerPlay,
   } from "@tabler/icons-svelte";
 
   let {
@@ -90,26 +90,52 @@
 <article class="card" class:disabled={!schedule.enabled} class:highlight>
   <div class="card-header">
     <button class="time-block" type="button" onclick={handleOpenSettings}>
-      {#if schedule.enabled}
-        <IconBellRinging size={18} stroke={2} color="var(--color-primary)" />
-      {:else}
-        <IconBellOff size={18} stroke={2} color="#555" />
-      {/if}
-      <span class="time">{schedule.time}</span>
-      {#if !schedule.enabled}
-        <span class="badge">Off</span>
-      {/if}
-    </button>
-
-    <button class="days" type="button" onclick={handleOpenSettings}>
-      {#each DAY_NUMS as day}
-        <span
-          class="badge"
-          class:badge-day={schedule.activeDays.includes(day)}
-          class:badge-day-inactive={!schedule.activeDays.includes(day)}
-          >{tr.days[day as 1 | 2 | 3 | 4 | 5 | 6 | 7]}</span
-        >
-      {/each}
+      <div class="time-main">
+        <div class="time-row">
+          {#if schedule.enabled}
+            <div
+              class="badge"
+              style="background: var(--color-surface-2); color: var(--color-primary); display: flex; align-items: center; gap: 2px; flex-direction: column; padding: .5rem 1rem; border-radius: 8px; width: 50px"
+            >
+              <IconBellRinging
+                size={18}
+                stroke={2}
+                color="var(--color-primary)"
+              />
+              <span>ON</span>
+            </div>
+          {:else}
+            <div
+              class="badge badge-paused"
+              style="display: flex; align-items: center; gap: 2px; flex-direction: column; padding: .5rem 1rem; border-radius: 8px; width: 50px"
+            >
+              <IconBellOff size={18} stroke={2} color="#555" />
+              <span>OFF</span>
+            </div>
+          {/if}
+          <div>
+            {#if schedule.name}
+              <div class="schedule-name">{schedule.name}</div>
+            {/if}
+            <div
+              style="display: flex; align-items: center; gap: 4px; flex-direction: row;"
+            >
+              <span class="time">{schedule.time}</span>
+              <div class="days">
+                {#each DAY_NUMS as day}
+                  <span
+                    class="item"
+                    class:badge-day={schedule.activeDays.includes(day)}
+                    class:badge-day-inactive={!schedule.activeDays.includes(
+                      day,
+                    )}>{tr.days[day as 1 | 2 | 3 | 4 | 5 | 6 | 7]}</span
+                  >
+                {/each}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </button>
 
     <div class="header-actions">
@@ -120,7 +146,8 @@
         class="btn btn-ghost btn-icon"
         style="width: fit-content;"
         onclick={() => onplay?.(schedule.id)}
-        title="Putar sekarang"><IconDisc size={15} />{tr.actions.play}</button
+        title="Putar sekarang"
+        ><IconPlayerPlay size={15} />{tr.actions.play}</button
       >
       <button
         class="btn btn-ghost btn-icon tt"
@@ -172,11 +199,11 @@
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
   }
-  .card:hover {
-    box-shadow: var(--shadow-md);
-  }
-  .card.disabled {
-    opacity: 0.55;
+  .card.disabled .media-strip,
+  .card.disabled .time,
+  .card.disabled .days {
+    opacity: 0.5;
+    filter: grayscale(100%);
   }
   .card.highlight {
     animation: card-highlight 1.4s ease-out forwards;
@@ -201,7 +228,7 @@
 
   .card-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     margin-bottom: 14px;
     flex-wrap: wrap;
@@ -220,6 +247,21 @@
   }
   .time-block:hover {
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    background: var(--color-surface-3);
+  }
+  .time-main {
+    text-align: left;
+  }
+  .schedule-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 2px;
+  }
+  .time-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .time {
     font-size: 22px;
@@ -231,19 +273,44 @@
 
   .days {
     display: flex;
-    gap: 4px;
     flex-wrap: wrap;
     background: none;
     border: none;
     padding: 4px 6px;
-    margin: -4px -6px;
+    gap: 2px;
     border-radius: var(--radius-md, 8px);
     cursor: pointer;
     transition: background 0.15s;
   }
-  .days:hover {
-    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+
+  .days .item {
+    font-size: 10px;
+    width: 34px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    /* border-right: 2px solid color-mix(in srgb, var(--color-bg) 75%, transparent); */
   }
+
+  /* first days item child*/
+  .days .item:first-child {
+    margin-left: 0;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    padding-left: 2px;
+    width: 36px;
+  }
+  /* last days item child*/
+  .days .item:last-child {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    border-right: none;
+    padding-right: 2px;
+    width: 36px;
+  }
+  /* .days:hover {
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  } */
 
   .header-actions {
     display: flex;

@@ -121,8 +121,6 @@
 
 {#if schedule}
   <div class="editor">
-    <h3 class="section-title">{tr.schedule.title}</h3>
-
     <!-- Enabled toggle -->
     <div class="field field-row">
       <span class="field-label">{tr.schedule.enabled}</span>
@@ -137,6 +135,21 @@
         />
         <span class="toggle-slider"></span>
       </label>
+    </div>
+
+    <!-- Name input -->
+    <div class="field">
+      <span class="field-label">{tr.schedule.name || "Name"}</span>
+      <input
+        class="input"
+        type="text"
+        placeholder={tr.schedule.namePlaceholder || "Schedule Name"}
+        value={schedule.name || ""}
+        onchange={(e) =>
+          updateSchedule(scheduleId, {
+            name: (e.target as HTMLInputElement).value || undefined,
+          })}
+      />
     </div>
 
     <!-- Time picker -->
@@ -163,6 +176,7 @@
               stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg
             >
           </button>
+          <span class="time-unit-label">{tr.schedule.hours}</span>
           <input
             class="time-input"
             type="text"
@@ -192,7 +206,6 @@
               stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
             >
           </button>
-          <span class="time-unit-label">{tr.schedule.hours}</span>
         </div>
 
         <span class="time-sep">:</span>
@@ -217,6 +230,7 @@
               stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg
             >
           </button>
+          <span class="time-unit-label">{tr.schedule.minutes}</span>
           <input
             class="time-input"
             type="text"
@@ -246,7 +260,6 @@
               stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
             >
           </button>
-          <span class="time-unit-label">{tr.schedule.minutes}</span>
         </div>
 
         <span class="time-sep">:</span>
@@ -271,6 +284,7 @@
               stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg
             >
           </button>
+          <span class="time-unit-label">{tr.schedule.seconds}</span>
           <input
             class="time-input"
             type="text"
@@ -300,7 +314,6 @@
               stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
             >
           </button>
-          <span class="time-unit-label">{tr.schedule.seconds}</span>
         </div>
       </div>
     </div>
@@ -360,11 +373,6 @@
   .editor {
     padding: 4px 0;
   }
-  .section-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
   .field {
     margin-bottom: 20px;
   }
@@ -396,7 +404,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 0px;
   }
   .spin-btn {
     display: flex;
@@ -423,8 +431,8 @@
     transform: scale(0.92);
   }
   .time-input {
-    width: 48px;
-    height: 48px;
+    width: 54px;
+    height: 64px;
     text-align: center;
     font-size: 24px;
     font-weight: 700;
@@ -440,6 +448,7 @@
       border-color 0.2s,
       box-shadow 0.2s;
     padding: 0;
+    padding-top: 16px;
     -moz-appearance: textfield;
     caret-color: var(--color-primary);
   }
@@ -454,6 +463,10 @@
       color-mix(in srgb, var(--color-primary) 18%, transparent);
   }
   .time-unit-label {
+    position: relative;
+    top: 12px;
+    height: 0px;
+    z-index: 9;
     font-size: 9px;
     font-weight: 600;
     color: var(--color-text-muted);
@@ -468,7 +481,7 @@
     color: var(--color-text-muted);
     line-height: 1;
     padding: 0 2px;
-    margin-bottom: 18px; /* offset to align with inputs, not labels */
+    margin-bottom: 6px; /* offset to align with inputs, not labels */
     user-select: none;
   }
 

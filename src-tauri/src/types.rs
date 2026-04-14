@@ -19,6 +19,8 @@ pub struct MediaItem {
 #[serde(rename_all = "camelCase")]
 pub struct Schedule {
     pub id: String,
+    #[serde(default)]
+    pub name: Option<String>,
     pub time: String, // "HH:MM:SS"
     pub active_days: Vec<u8>, // 1=Mon..7=Sun
     pub notifications: Vec<NotificationRule>,

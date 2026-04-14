@@ -1,6 +1,6 @@
 use keyring::Entry;
 
-const SERVICE_NAME: &str = "com.disperpusip.playbackannouncer";
+const SERVICE_NAME: &str = "com.disperpusip.siputar";
 const ACCOUNT_NAME: &str = "elevenlabs-api-key";
 
 #[test]

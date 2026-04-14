@@ -2,7 +2,7 @@ use keyring::Entry;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
-const SERVICE_NAME: &str = "com.disperpusip.playbackannouncer";
+const SERVICE_NAME: &str = "com.disperpusip.siputar";
 const ACCOUNT_NAME: &str = "elevenlabs-api-key";
 
 // In-memory cache to prevent repeated keychain dialogs

@@ -22,6 +22,7 @@
   const models = $derived(ttsStore.models);
   const hasApiKey = $derived(configStore.settings.hasApiKey);
 
+  let name = $state("");
   let text = $state("");
   let voiceId = $state("");
   let voiceName = $state("");
@@ -93,6 +94,7 @@
 
     try {
       const request: TTSGenerateRequest = {
+        name: name.trim() || undefined,
         text: text.trim(),
         voiceId,
         voiceName,
@@ -140,6 +142,18 @@
   </div>
 
   <div class="panel-body">
+    <!-- Name Input -->
+    <div class="field">
+      <label class="field-label" for="tts-name">{tr.tts.name || 'Name (Optional)'}</label>
+      <input
+        id="tts-name"
+        type="text"
+        class="input"
+        placeholder={tr.tts.namePlaceholder || 'E.g., Opening Announcement'}
+        bind:value={name}
+      />
+    </div>
+
     <!-- Text Input -->
     <div class="field">
       <label class="field-label" for="tts-text">{tr.tts.text}</label>
