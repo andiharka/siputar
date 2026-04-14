@@ -411,7 +411,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 0px;
   }
   .spin-btn {
     display: flex;
@@ -438,7 +438,7 @@
     transform: scale(0.92);
   }
   .time-input {
-    width: 48px;
+    width: 54px;
     height: 64px;
     text-align: center;
     font-size: 24px;
@@ -488,7 +488,7 @@
     color: var(--color-text-muted);
     line-height: 1;
     padding: 0 2px;
-    margin-bottom: 18px; /* offset to align with inputs, not labels */
+    margin-bottom: 6px; /* offset to align with inputs, not labels */
     user-select: none;
   }
 

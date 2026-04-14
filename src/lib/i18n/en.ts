@@ -5,6 +5,8 @@ export const en: Translations = {
   nav: { schedules: 'Schedule List', audio: 'Generate Audio', miniPlayer: 'Mini Player' },
   schedule: {
     title: 'Schedules',
+    name: 'Schedule Name',
+    namePlaceholder: 'Enter schedule name',
     addSchedule: 'Add Schedule',
     noSchedules: 'No schedules yet. Click the + button to add one.',
     time: 'Time',
@@ -17,9 +19,9 @@ export const en: Translations = {
     addNotification: 'Add Notification',
     minutesBefore: 'minutes before',
     deleteConfirm: 'Delete this schedule and all its media?',
-    hours: 'Hours',
-    minutes: 'Minutes',
-    seconds: 'Seconds',
+    hours: 'Hour',
+    minutes: 'Minute',
+    seconds: 'Second',
   },
   media: {
     title: 'Media',

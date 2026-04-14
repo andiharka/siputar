@@ -68,21 +68,40 @@
     <!-- Loop count -->
     <div class="field">
       <label class="field-label" for="media-loop">{tr.media.loopCount}</label>
-      <div class="loop-row">
-        <input
-          id="media-loop"
-          class="input"
-          type="number"
-          min="0"
-          step="1"
-          value={media.loopCount}
-          oninput={handleLoop}
-          style="width: 80px;"
-        />
-        <span class="loop-hint"
-          >{media.loopCount === 0 ? tr.media.loopForever : ""}</span
+      <div class="loop-col">
+        <button
+          class="spin-btn"
+          type="button"
+          onclick={() => updateMedia(scheduleId, mediaId, { loopCount: media.loopCount + 1 })}
+          aria-label="Increase loop"
+          tabindex="-1"
         >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
+        </button>
+        <div class="loop-input-wrapper">
+          <input
+            id="media-loop"
+            class="loop-input"
+            type="text"
+            inputmode="numeric"
+            value={media.loopCount}
+            onchange={handleLoop}
+          />
+          <span class="loop-x">x</span>
+        </div>
+        <button
+          class="spin-btn"
+          type="button"
+          onclick={() => updateMedia(scheduleId, mediaId, { loopCount: Math.max(0, media.loopCount - 1) })}
+          aria-label="Decrease loop"
+          tabindex="-1"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+        </button>
       </div>
+      <span class="loop-hint"
+        >{media.loopCount === 0 ? tr.media.loopForever : ""}</span
+      >
     </div>
 
     <div class="danger-zone">
@@ -130,12 +149,80 @@
     width: 100%;
     accent-color: var(--color-primary);
   }
-  .loop-row {
+  .loop-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0px;
+    width: fit-content;
+  }
+  .spin-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    width: 40px;
+    height: 22px;
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    padding: 0;
+  }
+  .spin-btn:hover {
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    color: var(--color-primary);
+  }
+  .spin-btn:active {
+    background: color-mix(in srgb, var(--color-primary) 25%, transparent);
+    transform: scale(0.92);
+  }
+  .loop-input-wrapper {
+    position: relative;
+    width: 64px;
+  }
+  .loop-input {
+    width: 100%;
+    height: 64px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+    letter-spacing: -0.5px;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-surface, #fff);
+    color: var(--color-text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    padding: 0 10px 0 0; /* space for 'x' */
+    -moz-appearance: textfield;
+    caret-color: var(--color-primary);
+  }
+  .loop-input::-webkit-outer-spin-button,
+  .loop-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .loop-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  }
+  .loop-x {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    pointer-events: none;
   }
   .loop-hint {
+    display: block;
+    margin-top: 8px;
     font-size: 12px;
     color: var(--color-primary);
     font-style: italic;
