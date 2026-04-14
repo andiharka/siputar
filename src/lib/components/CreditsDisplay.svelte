@@ -1,6 +1,10 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte.js';
-  import { ttsStore, formatCredits, getCreditsPercent } from '$lib/stores/tts.svelte.js';
+  import { t } from "$lib/i18n/index.svelte.js";
+  import {
+    ttsStore,
+    formatCredits,
+    getCreditsPercent,
+  } from "$lib/stores/tts.svelte.js";
 
   const tr = $derived(t());
   const subscription = $derived(ttsStore.subscription);
@@ -32,7 +36,7 @@
   .credits-bar-container {
     width: 80px;
     height: 6px;
-    background: var(--color-surface-2);
+    background: var(--color-surface-3);
     border-radius: 3px;
     overflow: hidden;
   }

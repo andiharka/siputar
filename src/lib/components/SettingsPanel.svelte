@@ -682,7 +682,7 @@
     overflow-y: auto;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    background: var(--color-surface-2);
+    background: var(--color-surface-3);
   }
 
   .empty-state {

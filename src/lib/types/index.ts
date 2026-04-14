@@ -11,6 +11,7 @@ export interface MediaItem {
 
 export interface Schedule {
   id: string;
+  name?: string;
   time: string; // "HH:MM:SS"
   activeDays: number[]; // 1=Mon … 7=Sun
   notifications: NotificationRule[];
@@ -80,6 +81,7 @@ export type TTSStatus = 'pending' | 'generating' | 'completed' | 'failed' | 'del
 
 export interface TTSHistoryItem {
   id: string;
+  name?: string;
   historyItemId: string | null;
   text: string;
   voiceId: string;
@@ -128,6 +130,7 @@ export interface UserSubscription {
 }
 
 export interface TTSGenerateRequest {
+  name?: string;
   text: string;
   voiceId: string;
   voiceName: string;

@@ -8,7 +8,7 @@
   import {
     IconCalendarEvent,
     IconMicrophone,
-    IconPlayerPlay,
+    IconDisc,
   } from "@tabler/icons-svelte";
 
   let { children } = $props();
@@ -85,7 +85,7 @@
         onclick={openMiniPlayer}
         title={tr.nav.miniPlayer}
       >
-        <IconPlayerPlay size={16} />
+        <IconDisc size={16} />
         <span>{tr.nav.miniPlayer}</span>
       </button>
     </div>

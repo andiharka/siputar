@@ -139,6 +139,21 @@
       </label>
     </div>
 
+    <!-- Name input -->
+    <div class="field">
+      <span class="field-label">{tr.schedule.name || "Name"}</span>
+      <input
+        class="input"
+        type="text"
+        placeholder={tr.schedule.namePlaceholder || "Schedule Name"}
+        value={schedule.name || ""}
+        onchange={(e) =>
+          updateSchedule(scheduleId, {
+            name: (e.target as HTMLInputElement).value || undefined,
+          })}
+      />
+    </div>
+
     <!-- Time picker -->
     <div class="field">
       <span class="field-label">{tr.schedule.time}</span>
@@ -163,6 +178,7 @@
               stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg
             >
           </button>
+          <span class="time-unit-label">{tr.schedule.hours}</span>
           <input
             class="time-input"
             type="text"
@@ -192,7 +208,6 @@
               stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
             >
           </button>
-          <span class="time-unit-label">{tr.schedule.hours}</span>
         </div>
 
         <span class="time-sep">:</span>
@@ -217,6 +232,7 @@
               stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg
             >
           </button>
+          <span class="time-unit-label">{tr.schedule.minutes}</span>
           <input
             class="time-input"
             type="text"
@@ -246,7 +262,6 @@
               stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
             >
           </button>
-          <span class="time-unit-label">{tr.schedule.minutes}</span>
         </div>
 
         <span class="time-sep">:</span>
@@ -271,6 +286,7 @@
               stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg
             >
           </button>
+          <span class="time-unit-label">{tr.schedule.seconds}</span>
           <input
             class="time-input"
             type="text"
@@ -300,7 +316,6 @@
               stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
             >
           </button>
-          <span class="time-unit-label">{tr.schedule.seconds}</span>
         </div>
       </div>
     </div>
@@ -424,7 +439,7 @@
   }
   .time-input {
     width: 48px;
-    height: 48px;
+    height: 64px;
     text-align: center;
     font-size: 24px;
     font-weight: 700;
@@ -440,6 +455,7 @@
       border-color 0.2s,
       box-shadow 0.2s;
     padding: 0;
+    padding-top: 16px;
     -moz-appearance: textfield;
     caret-color: var(--color-primary);
   }
@@ -454,6 +470,10 @@
       color-mix(in srgb, var(--color-primary) 18%, transparent);
   }
   .time-unit-label {
+    position: relative;
+    top: 12px;
+    height: 0px;
+    z-index: 9;
     font-size: 9px;
     font-weight: 600;
     color: var(--color-text-muted);

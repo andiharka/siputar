@@ -90,5 +90,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          bundleNameTemplate: "[platform]_[name]_[version]_[arch][ext]"
+          assetNamePattern: "[platform]_[name]_[version]_[arch][ext]"
           args: --verbose

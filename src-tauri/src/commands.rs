@@ -22,6 +22,7 @@ type DbArg<'a> = tauri::State<'a, Arc<Mutex<rusqlite::Connection>>>;
 #[serde(rename_all = "camelCase")]
 pub struct TTSHistoryItem {
     pub id: String,
+    pub name: Option<String>,
     pub history_item_id: Option<String>,
     pub text: String,
     pub voice_id: String,
@@ -42,6 +43,7 @@ pub struct TTSHistoryItem {
 #[serde(rename_all = "camelCase")]
 pub struct TTSGenerateRequest {
     pub text: String,
+    pub name: Option<String>,
     pub voice_id: String,
     pub voice_name: String,
     pub model_id: String,
@@ -321,7 +323,7 @@ pub fn get_tts_history(db: DbArg<'_>) -> Result<Vec<TTSHistoryItem>, String> {
     let conn = db.lock().map_err(|e| e.to_string())?;
     
     let mut stmt = conn.prepare(
-        "SELECT id, history_item_id, text, voice_id, voice_name, model_id, language,
+        "SELECT id, name, history_item_id, text, voice_id, voice_name, model_id, language,
                 stability, similarity_boost, speed, character_count, local_file_path,
                 status, created_at, synced_at
          FROM tts_history
@@ -331,20 +333,21 @@ pub fn get_tts_history(db: DbArg<'_>) -> Result<Vec<TTSHistoryItem>, String> {
     let items = stmt.query_map([], |row| {
         Ok(TTSHistoryItem {
             id: row.get(0)?,
-            history_item_id: row.get(1)?,
-            text: row.get(2)?,
-            voice_id: row.get(3)?,
-            voice_name: row.get(4)?,
-            model_id: row.get(5)?,
-            language: row.get(6)?,
-            stability: row.get(7)?,
-            similarity_boost: row.get(8)?,
-            speed: row.get(9)?,
-            character_count: row.get(10)?,
-            local_file_path: row.get(11)?,
-            status: row.get(12)?,
-            created_at: row.get(13)?,
-            synced_at: row.get(14)?,
+            name: row.get(1)?,
+            history_item_id: row.get(2)?,
+            text: row.get(3)?,
+            voice_id: row.get(4)?,
+            voice_name: row.get(5)?,
+            model_id: row.get(6)?,
+            language: row.get(7)?,
+            stability: row.get(8)?,
+            similarity_boost: row.get(9)?,
+            speed: row.get(10)?,
+            character_count: row.get(11)?,
+            local_file_path: row.get(12)?,
+            status: row.get(13)?,
+            created_at: row.get(14)?,
+            synced_at: row.get(15)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -365,6 +368,7 @@ pub async fn generate_speech(
     // Insert pending record
     let item = TTSHistoryItem {
         id: id.clone(),
+        name: request.name.clone(),
         history_item_id: None,
         text: request.text.clone(),
         voice_id: request.voice_id.clone(),
@@ -384,11 +388,12 @@ pub async fn generate_speech(
     {
         let conn = db.lock().map_err(|e| e.to_string())?;
         conn.execute(
-            "INSERT INTO tts_history (id, text, voice_id, voice_name, model_id, language,
+            "INSERT INTO tts_history (id, name, text, voice_id, voice_name, model_id, language,
              stability, similarity_boost, speed, character_count, status, created_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             rusqlite::params![
                 &id,
+                &request.name,
                 &request.text,
                 &request.voice_id,
                 &request.voice_name,
@@ -576,11 +581,12 @@ pub async fn sync_elevenlabs_history(
             let char_count = item.character_count_change_to - item.character_count_change_from;
 
             conn.execute(
-                "INSERT INTO tts_history (id, history_item_id, text, voice_id, voice_name, model_id,
+                "INSERT INTO tts_history (id, name, history_item_id, text, voice_id, voice_name, model_id,
                  stability, similarity_boost, character_count, status, created_at, synced_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
                 rusqlite::params![
                     Uuid::new_v4().to_string(),
+                    rusqlite::types::Null, // name is NULL for synced items
                     &item.history_item_id,
                     &item.text,
                     &item.voice_id,

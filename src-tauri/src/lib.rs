@@ -21,6 +21,7 @@ fn init_database(app: &tauri::App) -> Result<Connection, Box<dyn std::error::Err
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tts_history (
             id TEXT PRIMARY KEY,
+            name TEXT,
             history_item_id TEXT,
             text TEXT NOT NULL,
             voice_id TEXT NOT NULL,
@@ -48,6 +49,9 @@ fn init_database(app: &tauri::App) -> Result<Connection, Box<dyn std::error::Err
         "CREATE INDEX IF NOT EXISTS idx_tts_created ON tts_history(created_at DESC)",
         [],
     )?;
+
+    // Migration for existing databases
+    let _ = conn.execute("ALTER TABLE tts_history ADD COLUMN name TEXT", []);
 
     Ok(conn)
 }
