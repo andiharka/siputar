@@ -23,7 +23,7 @@ export interface ActivityLogTranslations {
 }
 
 export interface Translations {
-  app: { name: string };
+  app: { name: string, longName: string };
   nav: { schedules: string; audio: string; miniPlayer: string };
   schedule: { title: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string; hours: string; minutes: string; seconds: string };
   media: { title: string; addMedia: string; loopCount: string; volume: string; fileMissing: string; noMedia: string; deleteConfirm: string; loopForever: string };
@@ -37,7 +37,7 @@ export interface Translations {
 }
 
 export const id: Translations = {
-  app: { name: 'Disperpusip Bersuara' },
+  app: { name: 'SIPUTAR', longName: 'Sistem Informasi Pemutaran Terjadwal' },
   nav: { schedules: 'Daftar Jadwal', audio: 'Buat Audio', miniPlayer: 'Mini Player' },
   schedule: {
     title: 'Jadwal',

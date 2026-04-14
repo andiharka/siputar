@@ -55,40 +55,45 @@
 
 <div class="app-shell">
   <header class="header">
-    <div class="header-left">
-      <div style="display: inline-flex; gap: .5rem; align-items: center;">
-        <img src="/app-icon.png" alt="Playback Announcer" class="app-icon" />
+    <!-- <div class="header-left"> -->
+    <div
+      style="display: inline-flex; gap: .5rem; align-items: center; width: 116px"
+    >
+      <img src="/app-icon.png" alt="Playback Announcer" class="app-icon" />
+      <div class="app-titles">
         <h1 class="app-title">{tr.app.name}</h1>
+        <span class="app-long-title">{tr.app.longName}</span>
       </div>
-      <nav class="nav-tabs">
-        <a
-          href="/app/schedules"
-          class="nav-tab"
-          class:active={currentPath === "/app/schedules" || currentPath === "/"}
-        >
-          <IconCalendarEvent size={16} />
-          <span>{tr.nav.schedules}</span>
-        </a>
-        <a
-          href="/app/audio"
-          class="nav-tab"
-          class:active={currentPath === "/app/audio"}
-        >
-          <IconMicrophone size={16} />
-          <span>{tr.nav.audio}</span>
-        </a>
-      </nav>
     </div>
-    <div class="header-right">
-      <button
-        class="mini-player-btn"
-        onclick={openMiniPlayer}
-        title={tr.nav.miniPlayer}
+    <nav class="nav-tabs">
+      <a
+        href="/app/schedules"
+        class="nav-tab"
+        class:active={currentPath === "/app/schedules" || currentPath === "/"}
       >
-        <IconDisc size={16} />
-        <span>{tr.nav.miniPlayer}</span>
-      </button>
-    </div>
+        <IconCalendarEvent size={16} />
+        <span>{tr.nav.schedules}</span>
+      </a>
+      <a
+        href="/app/audio"
+        class="nav-tab"
+        class:active={currentPath === "/app/audio"}
+      >
+        <IconMicrophone size={16} />
+        <span>{tr.nav.audio}</span>
+      </a>
+    </nav>
+    <!-- </div>
+    <div class="header-right"> -->
+    <button
+      class="mini-player-btn"
+      onclick={openMiniPlayer}
+      title={tr.nav.miniPlayer}
+    >
+      <IconDisc size={16} />
+      <span>{tr.nav.miniPlayer}</span>
+    </button>
+    <!-- </div> -->
   </header>
 
   <main class="main-content">
@@ -159,9 +164,22 @@
     flex-shrink: 0;
   }
 
+  .app-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1;
+  }
+
   .app-title {
     font-size: 16px;
     font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .app-long-title {
+    font-size: 10px;
+    color: var(--color-text-muted);
     white-space: nowrap;
   }
 

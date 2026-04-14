@@ -1,7 +1,7 @@
 import type { Translations } from './id.js';
 
 export const en: Translations = {
-  app: { name: 'Playback Announcer' },
+  app: { name: 'SIPUTAR', longName: 'Scheduled Playback Information System' },
   nav: { schedules: 'Schedule List', audio: 'Generate Audio', miniPlayer: 'Mini Player' },
   schedule: {
     title: 'Schedules',
