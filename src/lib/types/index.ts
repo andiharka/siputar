@@ -16,6 +16,7 @@ export interface Schedule {
   activeDays: number[]; // 1=Mon … 7=Sun
   notifications: NotificationRule[];
   enabled: boolean;
+  loopCount: number; // 1 = play once, 0 = loop forever, n = repeat n times
   media: MediaItem[];
 }
 

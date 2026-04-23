@@ -22,6 +22,8 @@ export const en: Translations = {
     hours: 'Hour',
     minutes: 'Minute',
     seconds: 'Second',
+    loopCount: 'Loop Schedule',
+    loopForever: 'Loop forever',
   },
   media: {
     title: 'Media',
@@ -91,6 +93,8 @@ export const en: Translations = {
   },
   tts: {
     title: 'Text-to-Speech',
+    name: 'Audio Name',
+    namePlaceholder: 'Enter a name for this audio',
     generateAudio: 'Generate New Audio',
     credits: 'Credits',
     creditsRemaining: 'characters remaining',

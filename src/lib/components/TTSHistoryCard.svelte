@@ -16,6 +16,7 @@
     IconFolder,
     IconTrash,
     IconLoader,
+    IconCopy,
   } from "@tabler/icons-svelte";
 
   interface Props {
@@ -130,6 +131,15 @@
     });
   }
 
+  function handleCopyText() {
+    navigator.clipboard.writeText(item.text);
+    // show a toast notification for successful copy
+    const event = new CustomEvent("show-toast", {
+      detail: { message: "tr.tts.copiedToClipboard" },
+    });
+    window.dispatchEvent(event);
+  }
+
   // Listen for stop audio event from other cards
   $effect(() => {
     const handler = () => {
@@ -150,9 +160,6 @@
         <div class="item-name">{item.name}</div>
       {/if}
       <div class="text-preview">{truncateText(item.text)}</div>
-      {#if item.text.length > 100}
-        <div class="text-full-tooltip">{item.text}</div>
-      {/if}
     </div>
     <div class="meta">
       <span class="date">{formatDate(item.createdAt)}</span>
@@ -166,26 +173,42 @@
 
   <div class="card-tooltip">
     <div class="tooltip-row">
-      <span class="tooltip-label">Model:</span>
-      <span class="tooltip-value">{item.modelId}</span>
+      <div class="">{item.text}</div>
+      <button
+        class="btn btn-ghost"
+        style="display: flex;flex-direction: column; justify-content: center;"
+        onclick={handleCopyText}
+      >
+        <IconCopy size={16} />Copy
+      </button>
     </div>
-    {#if item.stability !== null}
+    <div
+      style="max-width: 200px; border-left: 2px solid var(--color-border); padding-left: .5rem; margin-top: .125rem;"
+    >
       <div class="tooltip-row">
-        <span class="tooltip-label">{tr.tts.stability}:</span>
-        <span class="tooltip-value">{(item.stability * 100).toFixed(0)}%</span>
+        <span class="tooltip-label">Model:</span>
+        <span class="tooltip-value">{item.modelId}</span>
       </div>
-    {/if}
-    {#if item.similarityBoost !== null}
+      {#if item.stability !== null}
+        <div class="tooltip-row">
+          <span class="tooltip-label">{tr.tts.stability}:</span>
+          <span class="tooltip-value">{(item.stability * 100).toFixed(0)}%</span
+          >
+        </div>
+      {/if}
+      {#if item.similarityBoost !== null}
+        <div class="tooltip-row">
+          <span class="tooltip-label">{tr.tts.similarity}:</span>
+          <span class="tooltip-value"
+            >{(item.similarityBoost * 100).toFixed(0)}%</span
+          >
+        </div>
+      {/if}
       <div class="tooltip-row">
-        <span class="tooltip-label">{tr.tts.similarity}:</span>
-        <span class="tooltip-value"
-          >{(item.similarityBoost * 100).toFixed(0)}%</span
+        <span class="tooltip-label">{tr.tts.charLimit}:</span>
+        <span class="tooltip-value">{item.characterCount.toLocaleString()}</span
         >
       </div>
-    {/if}
-    <div class="tooltip-row">
-      <span class="tooltip-label">{tr.tts.charLimit}:</span>
-      <span class="tooltip-value">{item.characterCount.toLocaleString()}</span>
     </div>
   </div>
 
@@ -267,11 +290,6 @@
   /* Wrapper that shows the full-text tooltip on hover */
   .text-preview-wrap {
     position: relative;
-  }
-  .text-preview-wrap:hover .text-full-tooltip {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
   }
 
   .text-full-tooltip {
@@ -380,11 +398,17 @@
     transition:
       opacity 0.15s ease,
       visibility 0.15s ease;
-    pointer-events: none;
+    /* pointer-events: none; */
     min-width: 180px;
+    max-width: 550px;
   }
 
   .card:hover .card-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .card-tooltip:hover {
     opacity: 1;
     visibility: visible;
   }

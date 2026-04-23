@@ -94,7 +94,7 @@
     z-index: 200;
     background: var(--color-surface);
     border-left: 1px solid var(--color-border);
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
@@ -102,6 +102,7 @@
   }
   .panel.open {
     transform: translateX(0);
+    box-shadow: var(--shadow-lg);
   }
 
   .panel-header {

@@ -434,8 +434,13 @@ pub async fn generate_speech(
             Ok(audio_data) => {
                 // Get audio folder from config
                 let audio_folder = get_audio_folder(&app_handle);
-                let filename = format!("{}_{}.mp3", 
-                    req.voice_name.replace(' ', "_"),
+                // Prefer user's custom name over voice name for the filename
+                let base_name = req.name
+                    .as_deref()
+                    .filter(|n| !n.trim().is_empty())
+                    .unwrap_or(&req.voice_name);
+                let filename = format!("{}_{}.mp3",
+                    base_name.replace(' ', "_"),
                     chrono::Utc::now().format("%Y%m%d_%H%M%S")
                 );
                 let file_path = std::path::Path::new(&audio_folder).join(&filename);

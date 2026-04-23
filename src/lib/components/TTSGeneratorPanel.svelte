@@ -144,12 +144,14 @@
   <div class="panel-body">
     <!-- Name Input -->
     <div class="field">
-      <label class="field-label" for="tts-name">{tr.tts.name || 'Name (Optional)'}</label>
+      <label class="field-label" for="tts-name"
+        >{tr.tts.name || "Name (Optional)"}</label
+      >
       <input
         id="tts-name"
         type="text"
         class="input"
-        placeholder={tr.tts.namePlaceholder || 'E.g., Opening Announcement'}
+        placeholder={tr.tts.namePlaceholder || "E.g., Opening Announcement"}
         bind:value={name}
       />
     </div>
@@ -330,7 +332,7 @@
     z-index: 200;
     background: var(--color-surface);
     border-left: 1px solid var(--color-border);
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
@@ -339,6 +341,7 @@
 
   .panel.open {
     transform: translateX(0);
+    box-shadow: var(--shadow-lg);
   }
 
   .panel-header {

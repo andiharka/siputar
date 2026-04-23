@@ -117,6 +117,19 @@
       : [...current, day].sort((a, b) => a - b);
     updateSchedule(scheduleId, { activeDays: updated });
   }
+
+  function handleLoopInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const val = parseInt(input.value);
+    if (isNaN(val)) return;
+    const clamped = Math.max(0, val);
+    input.value = String(clamped);
+    updateSchedule(scheduleId, { loopCount: clamped });
+  }
+
+  function handleLoopFocus(e: Event) {
+    (e.target as HTMLInputElement).select();
+  }
 </script>
 
 {#if schedule}
@@ -333,6 +346,71 @@
       </div>
     </div>
 
+    <!-- Loop count -->
+    <div class="field">
+      <span class="field-label">{tr.schedule.loopCount}</span>
+      <div class="loop-col">
+        <button
+          class="spin-btn"
+          type="button"
+          onclick={() =>
+            updateSchedule(scheduleId, {
+              loopCount: (schedule.loopCount ?? 1) + 1,
+            })}
+          aria-label="Increase loop"
+          tabindex="-1"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg
+          >
+        </button>
+        <div class="loop-input-wrapper">
+          <input
+            class="loop-input"
+            type="text"
+            inputmode="numeric"
+            value={schedule.loopCount ?? 1}
+            onchange={handleLoopInput}
+            onfocus={handleLoopFocus}
+          />
+          <span class="loop-x">x</span>
+        </div>
+        <button
+          class="spin-btn"
+          type="button"
+          onclick={() =>
+            updateSchedule(scheduleId, {
+              loopCount: Math.max(0, (schedule.loopCount ?? 1) - 1),
+            })}
+          aria-label="Decrease loop"
+          tabindex="-1"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
+          >
+        </button>
+        <span class="loop-hint"
+          >{(schedule.loopCount ?? 1) === 0
+            ? tr.schedule.loopForever
+            : ""}</span
+        >
+      </div>
+    </div>
+
     <!-- Notifications -->
     <div class="field">
       <span class="field-label">{tr.schedule.notifications}</span>
@@ -449,6 +527,7 @@
       box-shadow 0.2s;
     padding: 0;
     padding-top: 16px;
+    appearance: textfield;
     -moz-appearance: textfield;
     caret-color: var(--color-primary);
   }
@@ -523,5 +602,68 @@
     font-size: 12px;
     color: var(--color-text-muted);
     flex: 1;
+  }
+
+  /* ── Loop count (schedule-level) ── */
+  .loop-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    width: fit-content;
+  }
+  .loop-input-wrapper {
+    position: relative;
+    width: 64px;
+  }
+  .loop-input {
+    width: 100%;
+    height: 64px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+    letter-spacing: -0.5px;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-surface, #fff);
+    color: var(--color-text);
+    outline: none;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+    padding: 0 10px 0 0;
+    appearance: textfield;
+    -moz-appearance: textfield;
+    caret-color: var(--color-primary);
+  }
+  .loop-input::-webkit-outer-spin-button,
+  .loop-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .loop-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-primary) 18%, transparent);
+  }
+  .loop-x {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+  .loop-hint {
+    display: block;
+    /* margin-top: 8px; */
+    font-size: 12px;
+    color: var(--color-primary);
+    font-style: italic;
+    /* min-height: 1em; */
   }
 </style>

@@ -102,7 +102,15 @@
                 stroke={2}
                 color="var(--color-primary)"
               />
-              <span>ON</span>
+              <div>
+                {#if (schedule.loopCount ?? 1) === 0}
+                  <span>∞</span>
+                {:else if (schedule.loopCount ?? 1) > 1}
+                  <span>{schedule.loopCount}×</span>
+                {:else}
+                  <span>ON </span>
+                {/if}
+              </div>
             </div>
           {:else}
             <div
@@ -243,11 +251,11 @@
     margin: -4px -8px;
     border-radius: var(--radius-md, 8px);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: all 0.15s;
   }
   .time-block:hover {
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-    background: var(--color-surface-3);
+    background: var(--color-surface-2);
   }
   .time-main {
     text-align: left;
@@ -297,13 +305,13 @@
   /* first days item child*/
   .days .item:first-child {
     margin-left: 0;
-    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    border-radius: var(--radius-md) 4px 4px var(--radius-md);
     padding-left: 2px;
     width: 36px;
   }
   /* last days item child*/
   .days .item:last-child {
-    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    border-radius: 4px var(--radius-md) var(--radius-md) 4px;
     border-right: none;
     padding-right: 2px;
     width: 36px;

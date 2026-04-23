@@ -70,11 +70,23 @@
         <button
           class="spin-btn"
           type="button"
-          onclick={() => updateMedia(scheduleId, mediaId, { loopCount: media.loopCount + 1 })}
+          onclick={() =>
+            updateMedia(scheduleId, mediaId, {
+              loopCount: media.loopCount + 1,
+            })}
           aria-label="Increase loop"
           tabindex="-1"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"><polyline points="18 15 12 9 6 15" /></svg
+          >
         </button>
         <div class="loop-input-wrapper">
           <input
@@ -90,11 +102,23 @@
         <button
           class="spin-btn"
           type="button"
-          onclick={() => updateMedia(scheduleId, mediaId, { loopCount: Math.max(0, media.loopCount - 1) })}
+          onclick={() =>
+            updateMedia(scheduleId, mediaId, {
+              loopCount: Math.max(0, media.loopCount - 1),
+            })}
           aria-label="Decrease loop"
           tabindex="-1"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
+          >
         </button>
       </div>
       <span class="loop-hint"
@@ -160,7 +184,9 @@
     background: transparent;
     color: var(--color-text-muted);
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
     padding: 0;
   }
   .spin-btn:hover {
@@ -189,8 +215,11 @@
     background: var(--color-surface, #fff);
     color: var(--color-text);
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
     padding: 0 10px 0 0; /* space for 'x' */
+    appearance: textfield;
     -moz-appearance: textfield;
     caret-color: var(--color-primary);
   }
@@ -201,7 +230,8 @@
   }
   .loop-input:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-primary) 18%, transparent);
   }
   .loop-x {
     position: absolute;

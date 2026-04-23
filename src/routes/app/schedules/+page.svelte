@@ -95,8 +95,10 @@
       await listen("playback:stop", () => {
         setPlaybackState({ status: "idle", scheduleId: null, mediaPath: null });
         isPlayingSchedule = false;
+        advancing = false;
         playQueue = [];
         queueIndex = 0;
+        scheduleLoopRemaining = 0;
         invoke("close_mini_player").catch(() => {});
       });
     })();
@@ -114,7 +116,9 @@
   }[] = [];
   let queueIndex = 0;
   let loopRemaining = 0;
+  let scheduleLoopRemaining = 0;
   let isPlayingSchedule = false; // true while a schedule playlist is active
+  let advancing = false; // guard against re-entrant advancePlaybackQueue
   let newScheduleId = $state<string | null>(null);
 
   async function startScheduledPlayback(scheduleId: string) {
@@ -130,7 +134,11 @@
     }));
     queueIndex = 0;
     loopRemaining = Math.max(1, playQueue[0]?.loopCount ?? 1);
+    // Schedule-level loop: 0 = infinite (-1 sentinel), otherwise the total number of passes
+    const lc = schedule.loopCount ?? 1;
+    scheduleLoopRemaining = lc === 0 ? -1 : Math.max(1, lc);
     isPlayingSchedule = true;
+    advancing = false;
 
     setPlaybackState({
       status: "playing",
@@ -174,28 +182,46 @@
   }
 
   async function advancePlaybackQueue() {
-    // Guard: ignore stale 'ended' events after playlist is done
+    // Guard: ignore stale or duplicate 'ended' events
     if (!isPlayingSchedule || playQueue.length === 0) return;
+    if (advancing) return;
+    advancing = true;
 
-    loopRemaining--;
-    if (loopRemaining > 0) {
-      await playQueueItem(queueIndex);
-      return;
-    }
-    queueIndex++;
-    if (queueIndex < playQueue.length) {
-      loopRemaining = Math.max(1, playQueue[queueIndex].loopCount);
-      await playQueueItem(queueIndex);
-    } else {
-      // Entire playlist finished — clean up and hide mini-player
-      isPlayingSchedule = false;
-      playQueue = [];
-      queueIndex = 0;
-      setPlaybackState({ status: "idle", scheduleId: null, mediaPath: null });
-      // Don't emit playback:stop here — it would create a feedback loop
-      // (the listener calls close_mini_player again, and MiniPlayer removing
-      // src from media elements can re-trigger 'ended' events).
-      invoke("close_mini_player").catch(() => {});
+    try {
+      loopRemaining--;
+      if (loopRemaining > 0) {
+        await playQueueItem(queueIndex);
+        return;
+      }
+      queueIndex++;
+      if (queueIndex < playQueue.length) {
+        loopRemaining = Math.max(1, playQueue[queueIndex].loopCount);
+        await playQueueItem(queueIndex);
+      } else {
+        // Entire playlist finished — check schedule-level loop
+        if (scheduleLoopRemaining === -1) {
+          // Infinite loop: restart from beginning
+          queueIndex = 0;
+          loopRemaining = Math.max(1, playQueue[0].loopCount);
+          await playQueueItem(0);
+        } else if (scheduleLoopRemaining > 1) {
+          // More repeats remaining: decrement and restart
+          scheduleLoopRemaining--;
+          queueIndex = 0;
+          loopRemaining = Math.max(1, playQueue[0].loopCount);
+          await playQueueItem(0);
+        } else {
+          // All done — clean up and hide mini-player
+          isPlayingSchedule = false;
+          playQueue = [];
+          queueIndex = 0;
+          scheduleLoopRemaining = 0;
+          setPlaybackState({ status: "idle", scheduleId: null, mediaPath: null });
+          invoke("close_mini_player").catch(() => {});
+        }
+      }
+    } finally {
+      advancing = false;
     }
   }
 

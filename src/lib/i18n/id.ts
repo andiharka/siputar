@@ -25,11 +25,11 @@ export interface ActivityLogTranslations {
 export interface Translations {
   app: { name: string, longName: string };
   nav: { schedules: string; audio: string; miniPlayer: string };
-  schedule: { title: string; name: string; namePlaceholder: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string; hours: string; minutes: string; seconds: string };
+  schedule: { title: string; name: string; namePlaceholder: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string; hours: string; minutes: string; seconds: string; loopCount: string; loopForever: string };
   media: { title: string; addMedia: string; loopCount: string; volume: string; fileMissing: string; noMedia: string; deleteConfirm: string; loopForever: string };
   settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string; apiKey: string; apiKeyPlaceholder: string; apiKeyHint: string; testConnection: string; testSuccess: string; testFailed: string; audioFolder: string; audioFolderHint: string; browse: string; activityLog: ActivityLogTranslations };
   actions: { save: string; revert: string; close: string; edit: string; delete: string; add: string; play: string; cancel: string; confirm: string; moveUp: string; moveDown: string; generate: string; download: string; openFolder: string; stop: string };
-  tts: { title: string; generateAudio: string; credits: string; creditsRemaining: string; connectionOnline: string; connectionOffline: string; text: string; textPlaceholder: string; charLimit: string; voice: string; voicePlaceholder: string; model: string; modelPlaceholder: string; language: string; speed: string; speedHint: string; stability: string; stabilityHint: string; similarity: string; similarityHint: string; generating: string; completed: string; failed: string; noHistory: string; deleteConfirm: string; downloadSuccess: string; downloadFailed: string; offline: string; sync: string; syncing: string };
+  tts: { title: string; name: string; namePlaceholder: string; generateAudio: string; credits: string; creditsRemaining: string; connectionOnline: string; connectionOffline: string; text: string; textPlaceholder: string; charLimit: string; voice: string; voicePlaceholder: string; model: string; modelPlaceholder: string; language: string; speed: string; speedHint: string; stability: string; stabilityHint: string; similarity: string; similarityHint: string; generating: string; completed: string; failed: string; noHistory: string; deleteConfirm: string; downloadSuccess: string; downloadFailed: string; offline: string; sync: string; syncing: string };
   days: DayNames;
   unsaved: { title: string; message: string; save: string; discard: string; cancel: string };
   playback: { nowPlaying: string; paused: string; pause: string; resume: string; stop: string };
@@ -58,6 +58,8 @@ export const id: Translations = {
     hours: 'Jam',
     minutes: 'Menit',
     seconds: 'Detik',
+    loopCount: 'Ulangi Jadwal',
+    loopForever: 'Ulangi terus',
   },
   media: {
     title: 'Media',
@@ -127,6 +129,8 @@ export const id: Translations = {
   },
   tts: {
     title: 'Text-to-Speech',
+    name: 'Nama Audio',
+    namePlaceholder: 'Masukkan nama untuk audio ini',
     generateAudio: 'Buat Audio Baru',
     credits: 'Kredit',
     creditsRemaining: 'karakter tersisa',

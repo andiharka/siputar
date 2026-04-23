@@ -25,8 +25,13 @@ pub struct Schedule {
     pub active_days: Vec<u8>, // 1=Mon..7=Sun
     pub notifications: Vec<NotificationRule>,
     pub enabled: bool,
+    /// 1 = play once, 0 = loop forever, n = repeat n times
+    #[serde(default = "default_loop_count")]
+    pub loop_count: u32,
     pub media: Vec<MediaItem>,
 }
+
+fn default_loop_count() -> u32 { 1 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

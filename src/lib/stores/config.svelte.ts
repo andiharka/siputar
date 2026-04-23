@@ -96,6 +96,7 @@ export function addSchedule(): Schedule {
     activeDays: [...ALL_DAYS],
     notifications: [{ offsetMinutes: 1 }],
     enabled: true,
+    loopCount: 1,
     media: [],
   };
   _config.schedules = [..._config.schedules, schedule];
