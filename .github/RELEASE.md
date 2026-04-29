@@ -1,5 +1,29 @@
 # Quick Release Guide
 
+## ⚡ One-Time Setup (First Release Only)
+
+### 1. Generate signing keys:
+```bash
+bunx tauri signer generate -w ~/.tauri/siputar.key
+```
+This will print your **public key** in the terminal.
+
+### 2. Paste the public key into `src-tauri/tauri.conf.json`:
+```json
+"plugins": {
+  "updater": {
+    "pubkey": "<PASTE_PUBLIC_KEY_HERE>",
+    ...
+  }
+}
+```
+
+### 3. Add GitHub Secrets (repo → Settings → Secrets → Actions):
+- `TAURI_SIGNING_PRIVATE_KEY` — contents of `~/.tauri/siputar.key`
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` — leave empty (or your chosen password)
+
+---
+
 ## Steps to Create a New Release
 
 ### 1. Update version in 3 files:
@@ -40,7 +64,9 @@ git push origin vX.Y.Z
 GitHub Actions will automatically:
 - Create GitHub Release
 - Build for macOS, Windows, Linux
+- Sign all bundles with your private key
 - Upload installers (.dmg, .msi, .deb, .AppImage, etc.)
+- Generate and upload `latest.json` for in-app updates
 
 ### 5. Edit release notes on GitHub
 
@@ -50,6 +76,8 @@ Add:
 - Breaking Changes (if any)
 
 ### 6. Publish the release
+
+Existing installs will detect the new version automatically on next launch (3-second delayed check), or via Settings → About & Updates.
 
 ## Version Numbering (SemVer)
 

@@ -12,6 +12,7 @@
     IconSettings,
   } from "@tabler/icons-svelte";
   import { openSettings } from "$lib/stores/ui.svelte.js";
+  import { check } from "@tauri-apps/plugin-updater";
 
   let { children } = $props();
 
@@ -52,6 +53,20 @@
     };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
+  });
+
+  // Silent background update check
+  let updateAvailable = $state(false);
+
+  onMount(async () => {
+    // Small delay so app UI renders first
+    await new Promise(r => setTimeout(r, 3000));
+    try {
+      const update = await check();
+      if (update) updateAvailable = true;
+    } catch {
+      // Silently ignore — user can check manually in Settings
+    }
   });
 </script>
 
@@ -96,11 +111,14 @@
         <span>{tr.nav.miniPlayer}</span>
       </button>
       <button
-        class="header-btn icon-only"
+        class="header-btn icon-only update-indicator-wrap"
         onclick={openSettings}
         title={tr.settings.title}
       >
         <IconSettings size={16} />
+        {#if updateAvailable}
+          <span class="update-dot" title="Update available"></span>
+        {/if}
       </button>
     </div>
   </header>
@@ -234,5 +252,27 @@
     border-top: 1px solid var(--color-border);
     background: var(--color-surface);
     flex-shrink: 0;
+  }
+
+  .update-indicator-wrap {
+    position: relative;
+  }
+
+  .update-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: 1.5px solid var(--color-surface);
+    pointer-events: none;
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.2); }
   }
 </style>

@@ -99,6 +99,13 @@ pub fn run() {
             // Start background scheduler thread
             scheduler::start_scheduler(handle, scheduler_state.clone());
 
+            // Initialize updater plugin (desktop only)
+            #[cfg(desktop)]
+            {
+                app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+                app.handle().plugin(tauri_plugin_process::init())?;
+            }
+
             // Hide main window from taskbar on macOS when running in background
             #[cfg(target_os = "macos")]
             {

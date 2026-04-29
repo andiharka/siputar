@@ -22,12 +22,28 @@ export interface ActivityLogTranslations {
   playbackStopped: string;
 }
 
+export interface UpdateTranslations {
+  title: string;
+  currentVersion: string;
+  checkForUpdates: string;
+  checking: string;
+  upToDate: string;
+  available: string;
+  releaseNotes: string;
+  downloadAndInstall: string;
+  downloading: string;
+  installing: string;
+  restartRequired: string;
+  restartNow: string;
+  failed: string;
+}
+
 export interface Translations {
   app: { name: string, longName: string };
   nav: { schedules: string; audio: string; miniPlayer: string };
   schedule: { title: string; name: string; namePlaceholder: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string; hours: string; minutes: string; seconds: string; loopCount: string; loopForever: string };
   media: { title: string; addMedia: string; loopCount: string; volume: string; fileMissing: string; noMedia: string; deleteConfirm: string; loopForever: string };
-  settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string; apiKey: string; apiKeyPlaceholder: string; apiKeyHint: string; testConnection: string; testSuccess: string; testFailed: string; audioFolder: string; audioFolderHint: string; browse: string; activityLog: ActivityLogTranslations };
+  settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string; apiKey: string; apiKeyPlaceholder: string; apiKeyHint: string; testConnection: string; testSuccess: string; testFailed: string; audioFolder: string; audioFolderHint: string; browse: string; activityLog: ActivityLogTranslations; update: UpdateTranslations };
   actions: { save: string; revert: string; close: string; edit: string; delete: string; add: string; play: string; cancel: string; confirm: string; moveUp: string; moveDown: string; generate: string; download: string; openFolder: string; stop: string };
   tts: { title: string; name: string; namePlaceholder: string; generateAudio: string; credits: string; creditsRemaining: string; connectionOnline: string; connectionOffline: string; text: string; textPlaceholder: string; charLimit: string; voice: string; voicePlaceholder: string; model: string; modelPlaceholder: string; language: string; speed: string; speedHint: string; stability: string; stabilityHint: string; similarity: string; similarityHint: string; generating: string; completed: string; failed: string; noHistory: string; deleteConfirm: string; downloadSuccess: string; downloadFailed: string; offline: string; sync: string; syncing: string };
   days: DayNames;
@@ -48,8 +64,8 @@ export const id: Translations = {
     time: 'Waktu',
     activeDays: 'Hari Aktif',
     enabled: 'Aktif',
-    statusEnabled: 'Pemutar berjalan sesuai jadwal (klik untuk menjeda)',
-    statusDisabled: 'Pemutar tidak akan berjalan (klik untuk menyalakan)',
+    statusEnabled: 'Klik untuk menjeda pemutaran otomatis',
+    statusDisabled: 'Klik untuk menyalakan pemutaran otomatis',
     totalDuration: 'Total Durasi',
     notifications: 'Notifikasi',
     addNotification: 'Tambah Notifikasi',
@@ -109,6 +125,21 @@ export const id: Translations = {
       playbackPaused: 'Pemutaran dijeda',
       playbackStopped: 'Pemutaran dihentikan',
     },
+    update: {
+      title: 'Tentang & Pembaruan',
+      currentVersion: 'Versi Saat Ini',
+      checkForUpdates: 'Periksa Pembaruan',
+      checking: 'Memeriksa...',
+      upToDate: 'Anda sudah menggunakan versi terbaru!',
+      available: 'Pembaruan tersedia',
+      releaseNotes: 'Catatan rilis',
+      downloadAndInstall: 'Unduh & Pasang',
+      downloading: 'Mengunduh...',
+      installing: 'Memasang...',
+      restartRequired: 'Mulai ulang untuk menyelesaikan pembaruan',
+      restartNow: 'Mulai Ulang Sekarang',
+      failed: 'Gagal memeriksa pembaruan',
+    },
   },
   actions: {
     save: 'Simpan Perubahan',
@@ -134,8 +165,8 @@ export const id: Translations = {
     generateAudio: 'Buat Audio Baru',
     credits: 'Kredit',
     creditsRemaining: 'karakter tersisa',
-    connectionOnline: 'Mode online - dapat generate audio',
-    connectionOffline: 'Mode offline - hanya dapat memutar file lokal',
+    connectionOnline: 'Online - dapat generate audio',
+    connectionOffline: 'Offline - hanya dapat memutar file lokal',
     text: 'Teks',
     textPlaceholder: 'Masukkan teks yang ingin diubah menjadi audio...',
     charLimit: 'karakter',
