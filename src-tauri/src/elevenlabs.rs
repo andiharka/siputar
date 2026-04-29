@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-const BASE_URL: &str = "https://api.elevenlabs.io/v1";
+const BASE_URL: &str = "https://api.elevenlabs.io";
 
 // Rate limiter: 1 request per second
 pub struct RateLimiter {
@@ -59,13 +59,33 @@ pub struct UserSubscription {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VerifiedLanguage {
+    pub language: String,
+    pub model_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accent: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub locale: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preview_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Voice {
     pub voice_id: String,
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub category: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub labels: Option<std::collections::HashMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub preview_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub collection_ids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verified_languages: Option<Vec<VerifiedLanguage>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub high_quality_base_model_ids: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -164,7 +184,7 @@ impl ElevenLabsClient {
 
     pub async fn test_api_key(&self, key: &str) -> Result<bool, String> {
         let response = self.client
-            .get(format!("{}/user", BASE_URL))
+            .get(format!("{}/v1/user", BASE_URL))
             .header("xi-api-key", key)
             .send()
             .await
@@ -178,7 +198,7 @@ impl ElevenLabsClient {
         let api_key = Self::get_api_key()?;
 
         let response = self.client
-            .get(format!("{}/user/subscription", BASE_URL))
+            .get(format!("{}/v1/user/subscription", BASE_URL))
             .header("xi-api-key", &api_key)
             .send()
             .await
@@ -198,7 +218,7 @@ impl ElevenLabsClient {
         let api_key = Self::get_api_key()?;
 
         let response = self.client
-            .get(format!("{}/voices", BASE_URL))
+            .get(format!("{}/v2/voices", BASE_URL))
             .header("xi-api-key", &api_key)
             .send()
             .await
@@ -220,7 +240,7 @@ impl ElevenLabsClient {
         let api_key = Self::get_api_key()?;
 
         let response = self.client
-            .get(format!("{}/models", BASE_URL))
+            .get(format!("{}/v1/models", BASE_URL))
             .header("xi-api-key", &api_key)
             .send()
             .await
@@ -239,7 +259,7 @@ impl ElevenLabsClient {
         self.rate_limiter.wait().await;
         let api_key = Self::get_api_key()?;
 
-        let mut url = format!("{}/history", BASE_URL);
+        let mut url = format!("{}/v1/history", BASE_URL);
         let mut params = vec![];
         
         if let Some(size) = page_size {
@@ -303,7 +323,7 @@ impl ElevenLabsClient {
             voice_settings,
         };
 
-        let url = format!("{}/text-to-speech/{}?output_format=mp3_44100_128", BASE_URL, voice_id);
+        let url = format!("{}/v1/text-to-speech/{}?output_format=mp3_44100_128", BASE_URL, voice_id);
 
         let response = self.client
             .post(&url)
@@ -330,7 +350,7 @@ impl ElevenLabsClient {
         let api_key = Self::get_api_key()?;
 
         let response = self.client
-            .get(format!("{}/history/{}/audio", BASE_URL, history_item_id))
+            .get(format!("{}/v1/history/{}/audio", BASE_URL, history_item_id))
             .header("xi-api-key", &api_key)
             .send()
             .await
@@ -351,7 +371,7 @@ impl ElevenLabsClient {
         let api_key = Self::get_api_key()?;
 
         let response = self.client
-            .delete(format!("{}/history/{}", BASE_URL, history_item_id))
+            .delete(format!("{}/v1/history/{}", BASE_URL, history_item_id))
             .header("xi-api-key", &api_key)
             .send()
             .await

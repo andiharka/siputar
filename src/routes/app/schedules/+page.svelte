@@ -15,7 +15,7 @@
     setPlaybackState,
     setSchedulerStatus,
   } from "$lib/stores/playback.svelte.js";
-  import { openSettings, showConfirm } from "$lib/stores/ui.svelte.js";
+  import { showConfirm } from "$lib/stores/ui.svelte.js";
   import { t } from "$lib/i18n/index.svelte.js";
   import { getFileName } from "$lib/utils/thumbnail.js";
   import ScheduleList from "$lib/components/ScheduleList.svelte";
@@ -25,7 +25,6 @@
     IconPlayerPause,
     IconPlayerPlay,
     IconPlus,
-    IconSettings,
   } from "@tabler/icons-svelte";
 
   const tr = $derived(t());
@@ -289,12 +288,6 @@
     >
       <IconPlus size={16} />
       {tr.schedule.addSchedule}
-    </button>
-    <button
-      class="btn btn-ghost btn-icon"
-      onclick={openSettings}
-      title={tr.settings.title}
-      ><IconSettings size={16} />
     </button>
   </div>
 </div>

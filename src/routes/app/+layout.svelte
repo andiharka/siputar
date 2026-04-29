@@ -9,7 +9,9 @@
     IconCalendarEvent,
     IconMicrophone,
     IconDisc,
+    IconSettings,
   } from "@tabler/icons-svelte";
+  import { openSettings } from "$lib/stores/ui.svelte.js";
 
   let { children } = $props();
 
@@ -83,17 +85,24 @@
         <span>{tr.nav.audio}</span>
       </a>
     </nav>
-    <!-- </div>
-    <div class="header-right"> -->
-    <button
-      class="mini-player-btn"
-      onclick={openMiniPlayer}
-      title={tr.nav.miniPlayer}
-    >
-      <IconDisc size={16} />
-      <span>{tr.nav.miniPlayer}</span>
-    </button>
     <!-- </div> -->
+    <div class="header-right">
+      <button
+        class="header-btn"
+        onclick={openMiniPlayer}
+        title={tr.nav.miniPlayer}
+      >
+        <IconDisc size={16} />
+        <span>{tr.nav.miniPlayer}</span>
+      </button>
+      <button
+        class="header-btn icon-only"
+        onclick={openSettings}
+        title={tr.settings.title}
+      >
+        <IconSettings size={16} />
+      </button>
+    </div>
   </header>
 
   <main class="main-content">
@@ -125,7 +134,13 @@
     height: 52px;
   }
 
-  .mini-player-btn {
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-btn {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -140,9 +155,13 @@
     transition: var(--transition);
   }
 
-  .mini-player-btn:hover {
+  .header-btn:hover {
     color: var(--color-text);
     background: var(--color-surface-2);
+  }
+
+  .header-btn.icon-only {
+    padding: 6px;
   }
 
   .app-icon {

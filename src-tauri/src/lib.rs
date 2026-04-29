@@ -35,7 +35,8 @@ fn init_database(app: &tauri::App) -> Result<Connection, Box<dyn std::error::Err
             local_file_path TEXT,
             status TEXT NOT NULL DEFAULT 'pending',
             created_at TEXT NOT NULL,
-            synced_at TEXT
+            synced_at TEXT,
+            error_message TEXT
         )",
         [],
     )?;
@@ -52,6 +53,7 @@ fn init_database(app: &tauri::App) -> Result<Connection, Box<dyn std::error::Err
 
     // Migration for existing databases
     let _ = conn.execute("ALTER TABLE tts_history ADD COLUMN name TEXT", []);
+    let _ = conn.execute("ALTER TABLE tts_history ADD COLUMN error_message TEXT", []);
 
     Ok(conn)
 }

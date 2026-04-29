@@ -18,7 +18,6 @@
   import {
     IconPlus,
     IconRefresh,
-    IconSettings,
     IconWifi,
     IconWifiOff,
     IconX,
@@ -87,7 +86,7 @@
       title={tr.tts.sync}
     >
       <span class:spinning={isSyncing}><IconRefresh size={16} /></span>
-      {isSyncing ? tr.tts.syncing : tr.tts.sync}
+      <!-- {isSyncing ? tr.tts.syncing : tr.tts.sync} -->
     </button>
     <button
       class="btn btn-primary"
@@ -98,11 +97,6 @@
       <IconPlus size={16} />
       {tr.tts.generateAudio}
     </button>
-    <button
-      class="btn btn-ghost btn-icon"
-      onclick={openSettings}
-      title={tr.settings.title}><IconSettings size={16} /></button
-    >
   </div>
 </div>
 
@@ -218,10 +212,10 @@
   }
   @keyframes spin {
     from {
-      transform: rotate(0deg);
+      transform: rotate(360deg);
     }
     to {
-      transform: rotate(360deg);
+      transform: rotate(0deg);
     }
   }
 </style>

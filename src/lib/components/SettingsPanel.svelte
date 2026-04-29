@@ -374,6 +374,22 @@
     {/if}
   </div>
 
+  <!-- ElevenLabs Collection ID -->
+  <div class="field">
+    <span class="field-label">ElevenLabs Collection ID</span>
+    <input
+      type="text"
+      class="input"
+      placeholder="Leave empty to show all voices"
+      value={configStore.settings.elevenLabsCollectionId}
+      onchange={async (e) => {
+        updateSettings({ elevenLabsCollectionId: (e.target as HTMLInputElement).value });
+        await saveConfig();
+      }}
+    />
+    <span class="field-hint">Filter voices by collection ID in the generation panel.</span>
+  </div>
+
   <!-- Audio Folder -->
   <div class="field">
     <span class="field-label">{tr.settings.audioFolder}</span>

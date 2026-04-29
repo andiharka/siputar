@@ -37,6 +37,7 @@ pub struct TTSHistoryItem {
     pub status: String,
     pub created_at: String,
     pub synced_at: Option<String>,
+    pub error_message: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -325,7 +326,7 @@ pub fn get_tts_history(db: DbArg<'_>) -> Result<Vec<TTSHistoryItem>, String> {
     let mut stmt = conn.prepare(
         "SELECT id, name, history_item_id, text, voice_id, voice_name, model_id, language,
                 stability, similarity_boost, speed, character_count, local_file_path,
-                status, created_at, synced_at
+                status, created_at, synced_at, error_message
          FROM tts_history
          ORDER BY created_at DESC"
     ).map_err(|e| e.to_string())?;
@@ -348,6 +349,7 @@ pub fn get_tts_history(db: DbArg<'_>) -> Result<Vec<TTSHistoryItem>, String> {
             status: row.get(13)?,
             created_at: row.get(14)?,
             synced_at: row.get(15)?,
+            error_message: row.get(16)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -383,14 +385,15 @@ pub async fn generate_speech(
         status: "generating".to_string(),
         created_at: created_at.clone(),
         synced_at: None,
+        error_message: None,
     };
 
     {
         let conn = db.lock().map_err(|e| e.to_string())?;
         conn.execute(
             "INSERT INTO tts_history (id, name, text, voice_id, voice_name, model_id, language,
-             stability, similarity_boost, speed, character_count, status, created_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+             stability, similarity_boost, speed, character_count, status, created_at, error_message)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
             rusqlite::params![
                 &id,
                 &request.name,
@@ -405,6 +408,7 @@ pub async fn generate_speech(
                 char_count,
                 "generating",
                 &created_at,
+                rusqlite::types::Null,
             ],
         ).map_err(|e| e.to_string())?;
     }
@@ -453,16 +457,16 @@ pub async fn generate_speech(
                 // Save audio file
                 if let Err(e) = std::fs::write(&file_path, &audio_data) {
                     eprintln!("Failed to save audio: {}", e);
-                    update_tts_status(&db, &item_id, "failed", None);
+                    update_tts_status(&db, &item_id, "failed", None, Some(&e.to_string()));
                     return;
                 }
 
                 let path_str = file_path.to_string_lossy().to_string();
-                update_tts_status(&db, &item_id, "completed", Some(&path_str));
+                update_tts_status(&db, &item_id, "completed", Some(&path_str), None);
             }
             Err(e) => {
                 eprintln!("TTS generation failed: {}", e);
-                update_tts_status(&db, &item_id, "failed", None);
+                update_tts_status(&db, &item_id, "failed", None, Some(&e));
             }
         }
     });
@@ -470,11 +474,11 @@ pub async fn generate_speech(
     Ok(item)
 }
 
-fn update_tts_status(db: &Arc<Mutex<rusqlite::Connection>>, id: &str, status: &str, file_path: Option<&str>) {
+fn update_tts_status(db: &Arc<Mutex<rusqlite::Connection>>, id: &str, status: &str, file_path: Option<&str>, error_message: Option<&str>) {
     if let Ok(conn) = db.lock() {
         let _ = conn.execute(
-            "UPDATE tts_history SET status = ?1, local_file_path = ?2 WHERE id = ?3",
-            rusqlite::params![status, file_path, id],
+            "UPDATE tts_history SET status = ?1, local_file_path = ?2, error_message = ?3 WHERE id = ?4",
+            rusqlite::params![status, file_path, error_message, id],
         );
     }
 }
@@ -587,8 +591,8 @@ pub async fn sync_elevenlabs_history(
 
             conn.execute(
                 "INSERT INTO tts_history (id, name, history_item_id, text, voice_id, voice_name, model_id,
-                 stability, similarity_boost, character_count, status, created_at, synced_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                 stability, similarity_boost, character_count, status, created_at, synced_at, error_message)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
                 rusqlite::params![
                     Uuid::new_v4().to_string(),
                     rusqlite::types::Null, // name is NULL for synced items
@@ -603,6 +607,7 @@ pub async fn sync_elevenlabs_history(
                     "completed",
                     &created_at,
                     &now,
+                    rusqlite::types::Null,
                 ],
             ).ok();
         }

@@ -9,12 +9,12 @@
     loadModels,
     generateSpeech,
   } from "$lib/stores/tts.svelte.js";
-  import { configStore } from "$lib/stores/config.svelte.js";
+  import { configStore, updateSettings, saveConfig } from "$lib/stores/config.svelte.js";
   import type {
     TTSGenerateRequest,
     ElevenLabsModel,
   } from "$lib/types/index.js";
-  import { IconX, IconLoader } from "@tabler/icons-svelte";
+  import { IconX, IconLoader, IconRefresh, IconPlayerPlay, IconPlayerPause } from "@tabler/icons-svelte";
 
   const tr = $derived(t());
   const isOpen = $derived(uiStore.ttsPanelOpen);
@@ -32,10 +32,95 @@
   let similarityBoost = $state(0.75);
   let speed = $state(1.0);
   let isGenerating = $state(false);
+  let isRefreshing = $state(false);
   let error = $state<string | null>(null);
 
+  // Audio preview state
+  let currentAudio = $state<HTMLAudioElement | null>(null);
+  let isPlayingPreview = $state(false);
+
+  function getLanguageEmoji(languageName: string): string {
+    if (!languageName) return '🌍';
+    const map: Record<string, string> = {
+        'english': '🇺🇸', 'en': '🇺🇸', 'en-us': '🇺🇸', 'en-gb': '🇬🇧', 'american': '🇺🇸', 'british': '🇬🇧', 'australian': '🇦🇺',
+        'indonesian': '🇮🇩', 'id': '🇮🇩',
+        'malay': '🇲🇾', 'ms': '🇲🇾',
+        'japanese': '🇯🇵', 'ja': '🇯🇵',
+        'chinese': '🇨🇳', 'zh': '🇨🇳',
+        'korean': '🇰🇷', 'ko': '🇰🇷',
+        'spanish': '🇪🇸', 'es': '🇪🇸',
+        'french': '🇫🇷', 'fr': '🇫🇷',
+        'german': '🇩🇪', 'de': '🇩🇪',
+        'italian': '🇮🇹', 'it': '🇮🇹',
+        'portuguese': '🇵🇹', 'pt': '🇵🇹',
+        'russian': '🇷🇺', 'ru': '🇷🇺',
+        'hindi': '🇮🇳', 'hi': '🇮🇳',
+        'arabic': '🇸🇦', 'ar': '🇸🇦',
+    };
+    const key = languageName.toLowerCase();
+    for (const [k, v] of Object.entries(map)) {
+        if (key.includes(k) || key === k) return v;
+    }
+    return '🌍';
+  }
+
+  const languageNames: Record<string, string> = {
+    'en': 'English', 'id': 'Indonesian', 'ms': 'Malay', 'jv': 'Javanese', 'su': 'Sundanese',
+    'ja': 'Japanese', 'zh': 'Chinese', 'ko': 'Korean', 'es': 'Spanish', 'fr': 'French',
+    'de': 'German', 'it': 'Italian', 'pt': 'Portuguese', 'ru': 'Russian', 'hi': 'Hindi',
+    'ar': 'Arabic', 'nl': 'Dutch', 'tr': 'Turkish', 'pl': 'Polish', 'sv': 'Swedish',
+    'bg': 'Bulgarian', 'ro': 'Romanian', 'cs': 'Czech', 'el': 'Greek', 'fi': 'Finnish',
+    'hr': 'Croatian', 'da': 'Danish', 'ta': 'Tamil', 'uk': 'Ukrainian', 'sk': 'Slovak',
+    'hu': 'Hungarian', 'no': 'Norwegian', 'vi': 'Vietnamese'
+  };
+
+  function getLanguageLongName(code: string): string {
+    if (!code) return '';
+    return languageNames[code.toLowerCase()] || code;
+  }
+
+  function playPreview(url?: string) {
+    if (!url) return;
+    if (currentAudio) {
+      currentAudio.pause();
+      if (currentAudio.src === url) {
+        currentAudio = null;
+        isPlayingPreview = false;
+        return;
+      }
+    }
+    currentAudio = new Audio(url);
+    isPlayingPreview = true;
+    currentAudio.onended = () => {
+      isPlayingPreview = false;
+      currentAudio = null;
+    };
+    currentAudio.play().catch(() => {
+      isPlayingPreview = false;
+      currentAudio = null;
+    });
+  }
+
+  const filteredVoices = $derived(
+    configStore.settings.elevenLabsCollectionId 
+      ? voices.filter(v => v.collection_ids?.includes(configStore.settings.elevenLabsCollectionId))
+      : voices
+  );
+
+  const selectedVoice = $derived(filteredVoices.find(v => v.voice_id === voiceId));
+
+  const PINNED_MODEL_ID = 'eleven_v3';
+
+  const availableModels = $derived.by(() => {
+    const pinnedModel = models.find(m => m.model_id === PINNED_MODEL_ID);
+    const voiceModels = selectedVoice?.high_quality_base_model_ids?.length
+      ? models.filter(m => selectedVoice.high_quality_base_model_ids?.includes(m.model_id) && m.model_id !== PINNED_MODEL_ID)
+      : models.filter(m => m.model_id !== PINNED_MODEL_ID);
+    return pinnedModel ? [pinnedModel, ...voiceModels] : voiceModels;
+  });
+
   const selectedModel = $derived<ElevenLabsModel | undefined>(
-    models.find((m) => m.model_id === modelId),
+    availableModels.find((m) => m.model_id === modelId),
   );
 
   const maxCharacters = $derived(
@@ -55,13 +140,34 @@
     selectedModel ? selectedModel.can_do_text_to_speech : true,
   );
 
-  const languages = [
-    { id: "id", name: "Indonesian" },
-    { id: "en", name: "English" },
-    { id: "ms", name: "Malay" },
-    { id: "jv", name: "Javanese" },
-    { id: "su", name: "Sundanese" },
-  ];
+  const availableLanguages = $derived.by(() => {
+    // Collect distinct base language codes from the voice metadata
+    const seen = new Set<string>();
+    const langs: { id: string; label: string }[] = [];
+
+    // Always pin Indonesian at the top
+    seen.add('id');
+    langs.push({ id: 'id', label: `${getLanguageEmoji('indonesian')} Indonesian` });
+
+    if (selectedVoice) {
+      const sources: string[] = [];
+      if (selectedVoice.verified_languages?.length) {
+        selectedVoice.verified_languages.forEach(v => sources.push(v.language));
+      } else if (selectedVoice.labels?.language) {
+        sources.push(selectedVoice.labels.language);
+      }
+
+      for (const code of sources) {
+        const base = code.split('-')[0].toLowerCase();
+        if (seen.has(base)) continue;
+        seen.add(base);
+        const longName = getLanguageLongName(base);
+        langs.push({ id: base, label: `${getLanguageEmoji(base)} ${longName}` });
+      }
+    }
+
+    return langs;
+  });
 
   onMount(async () => {
     if (hasApiKey && ttsStore.isOnline) {
@@ -70,20 +176,84 @@
   });
 
   $effect(() => {
-    if (isOpen && voices.length > 0 && !voiceId) {
-      voiceId = voices[0].voice_id;
-      voiceName = voices[0].name;
+    if (isOpen && filteredVoices.length > 0 && !voiceId) {
+      voiceId = configStore.settings.lastSelectedVoiceId || filteredVoices[0].voice_id;
+      const voice = filteredVoices.find((v) => v.voice_id === voiceId) || filteredVoices[0];
+      voiceId = voice.voice_id;
+      voiceName = voice.name;
     }
-    if (isOpen && models.length > 0 && !modelId) {
-      modelId = models[0].model_id;
+    if (isOpen && availableModels.length > 0 && !modelId) {
+      modelId = configStore.settings.lastSelectedModelId || availableModels[0].model_id;
+      const model = availableModels.find((m) => m.model_id === modelId) || availableModels[0];
+      modelId = model.model_id;
+    }
+    if (isOpen && !language) {
+      language = configStore.settings.lastSelectedLanguage || availableLanguages[0]?.id || "id";
+    }
+  });
+
+  $effect(() => {
+    if (isOpen) {
+      console.log(`[ElevenLabs] Filtering voices by collection ID: '${configStore.settings.elevenLabsCollectionId}'`);
+      console.log(`[ElevenLabs] Found ${filteredVoices.length} voices (out of ${voices.length})`);
+    }
+  });
+
+  $effect(() => {
+    if (isOpen) {
+      let changed = false;
+      if (voiceId && configStore.settings.lastSelectedVoiceId !== voiceId) {
+        updateSettings({ lastSelectedVoiceId: voiceId });
+        changed = true;
+      }
+      if (modelId && configStore.settings.lastSelectedModelId !== modelId) {
+        updateSettings({ lastSelectedModelId: modelId });
+        changed = true;
+      }
+      if (language && configStore.settings.lastSelectedLanguage !== language) {
+        updateSettings({ lastSelectedLanguage: language });
+        changed = true;
+      }
+      if (changed) {
+        saveConfig();
+      }
+    }
+  });
+
+  $effect(() => {
+    if (isOpen && availableModels.length > 0 && availableLanguages.length > 0) {
+      // Auto-update model and language if the current ones become invalid due to voice change
+      if (!availableLanguages.find(l => l.id === language)) {
+        language = availableLanguages[0]?.id;
+      }
+      if (!availableModels.find(m => m.model_id === modelId)) {
+        modelId = availableModels[0].model_id;
+      }
     }
   });
 
   function handleVoiceChange(e: Event) {
     const select = e.target as HTMLSelectElement;
     voiceId = select.value;
-    const voice = voices.find((v) => v.voice_id === voiceId);
+    const voice = filteredVoices.find((v) => v.voice_id === voiceId);
     voiceName = voice?.name || "";
+    // Clear audio if preview was playing
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+      isPlayingPreview = false;
+    }
+  }
+
+  async function handleRefresh() {
+    isRefreshing = true;
+    try {
+      await Promise.all([loadVoices(true), loadModels(true)]);
+    } catch (e) {
+      console.error("Failed to refresh", e);
+    } finally {
+      isRefreshing = false;
+    }
   }
 
   async function handleGenerate() {
@@ -93,13 +263,18 @@
     error = null;
 
     try {
+      // ElevenLabs API only accepts base ISO 639-1 codes (e.g. "en", "ms").
+      // Locale codes with regions ("en-US", "en-GB") cause a validation error.
+      // Strip anything after a hyphen before sending.
+      const baseLanguage = language ? language.split('-')[0] : undefined;
+
       const request: TTSGenerateRequest = {
         name: name.trim() || undefined,
         text: text.trim(),
         voiceId,
         voiceName,
         modelId,
-        language,
+        language: baseLanguage,
         stability: supportsSettings ? stability : undefined,
         similarityBoost: supportsSettings ? similarityBoost : undefined,
         speed: supportsSettings ? speed : undefined,
@@ -119,6 +294,11 @@
   function handleClose() {
     closeTTSPanel();
     error = null;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+      isPlayingPreview = false;
+    }
   }
 </script>
 
@@ -136,9 +316,14 @@
 <aside class="panel" class:open={isOpen}>
   <div class="panel-header">
     <h3 class="panel-title">{tr.tts.generateAudio}</h3>
-    <button class="close-btn" onclick={handleClose} aria-label="Close panel">
-      <IconX size={16} />
-    </button>
+    <div class="header-actions">
+      <button class="action-btn" onclick={handleRefresh} title="Refresh Voices" disabled={isRefreshing}>
+        <IconRefresh size={16} class={isRefreshing ? 'spinning' : ''} />
+      </button>
+      <button class="action-btn" onclick={handleClose} aria-label="Close panel">
+        <IconX size={16} />
+      </button>
+    </div>
   </div>
 
   <div class="panel-body">
@@ -186,15 +371,38 @@
     <!-- Voice Selection -->
     <div class="field">
       <label class="field-label" for="tts-voice">{tr.tts.voice}</label>
-      <select
-        id="tts-voice"
-        class="select"
-        value={voiceId}
-        onchange={handleVoiceChange}
-      >
-        <option value="" disabled>{tr.tts.voicePlaceholder}</option>
-        {#each voices as voice}
-          <option value={voice.voice_id}>{voice.name}</option>
+      <div class="voice-select-row">
+        <select
+          id="tts-voice"
+          class="select"
+          value={voiceId}
+          onchange={handleVoiceChange}
+        >
+          <option value="" disabled>{tr.tts.voicePlaceholder}</option>
+          {#each filteredVoices as voice}
+            <option value={voice.voice_id}>
+              {voice.labels?.language ? getLanguageEmoji(voice.labels.language) + ' ' : ''}{voice.name}
+            </option>
+          {/each}
+        </select>
+        {#if selectedVoice?.preview_url}
+          <button class="btn btn-ghost btn-icon preview-btn py-2" onclick={() => playPreview(selectedVoice?.preview_url)} title="Play Preview">
+            {#if isPlayingPreview}
+              <span><IconPlayerPause size={16} /></span>
+            {:else}
+              <span><IconPlayerPlay size={16} /></span>
+            {/if}
+          </button>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Language Selection -->
+    <div class="field">
+      <label class="field-label" for="tts-language">{tr.tts.language}</label>
+      <select id="tts-language" class="select" bind:value={language}>
+        {#each availableLanguages as lang}
+          <option value={lang.id}>{lang.label}</option>
         {/each}
       </select>
     </div>
@@ -204,18 +412,8 @@
       <label class="field-label" for="tts-model">{tr.tts.model}</label>
       <select id="tts-model" class="select" bind:value={modelId}>
         <option value="" disabled>{tr.tts.modelPlaceholder}</option>
-        {#each models as model}
+        {#each availableModels as model}
           <option value={model.model_id}>{model.name}</option>
-        {/each}
-      </select>
-    </div>
-
-    <!-- Language Selection -->
-    <div class="field">
-      <label class="field-label" for="tts-language">{tr.tts.language}</label>
-      <select id="tts-language" class="select" bind:value={language}>
-        {#each languages as lang}
-          <option value={lang.id}>{lang.name}</option>
         {/each}
       </select>
     </div>
@@ -357,19 +555,32 @@
     font-weight: 600;
   }
 
-  .close-btn {
+  .header-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .action-btn {
     background: none;
     border: none;
     cursor: pointer;
     color: var(--color-text-muted);
-    padding: 4px 8px;
+    padding: 4px 6px;
     border-radius: var(--radius-sm);
     transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .close-btn:hover {
+  .action-btn:hover {
     background: var(--color-surface-2);
     color: var(--color-text);
+  }
+
+  .action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .panel-body {
@@ -512,6 +723,27 @@
 
   :global(.spinning) {
     animation: spin 1s linear infinite;
+  }
+
+  .voice-select-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  .voice-select-row .select {
+    flex: 1;
+  }
+  
+  .preview-btn {
+    padding: 0 12px;
+    height: 36px;
+    font-size: 14px;
+    background: var(--color-surface-2);
+  }
+  
+  .preview-btn:hover {
+    background: var(--color-surface-3);
   }
 
   @keyframes spin {

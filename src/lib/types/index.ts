@@ -26,6 +26,10 @@ export interface AppSettings {
   runOnStartup: boolean;
   ttsAudioFolder: string;
   hasApiKey: boolean;
+  elevenLabsCollectionId: string;
+  lastSelectedVoiceId: string;
+  lastSelectedModelId: string;
+  lastSelectedLanguage: string;
 }
 
 export interface AppConfig {
@@ -67,6 +71,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   runOnStartup: false,
   ttsAudioFolder: '',
   hasApiKey: false,
+  elevenLabsCollectionId: '',
+  lastSelectedVoiceId: '',
+  lastSelectedModelId: '',
+  lastSelectedLanguage: '',
 };
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -97,6 +105,7 @@ export interface TTSHistoryItem {
   status: TTSStatus;
   createdAt: string;
   syncedAt: string | null;
+  errorMessage: string | null;
 }
 
 export interface ElevenLabsVoice {
@@ -105,6 +114,15 @@ export interface ElevenLabsVoice {
   category?: string;
   labels?: Record<string, string>;
   preview_url?: string;
+  collection_ids?: string[];
+  verified_languages?: {
+    language: string;
+    model_id: string;
+    accent: string;
+    locale: string;
+    preview_url?: string;
+  }[];
+  high_quality_base_model_ids?: string[];
 }
 
 export interface ElevenLabsLanguage {

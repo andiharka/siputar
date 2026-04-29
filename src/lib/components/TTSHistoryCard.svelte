@@ -210,6 +210,11 @@
         >
       </div>
     </div>
+    {#if item.status === 'failed' && item.errorMessage}
+      <div class="tooltip-error">
+        <strong>Error:</strong> {item.errorMessage}
+      </div>
+    {/if}
   </div>
 
   <div class="card-actions">
@@ -469,5 +474,22 @@
   :global([data-theme="dark"]) .badge-warning {
     background: #92400e;
     color: #fef3c7;
+  }
+
+  .tooltip-error {
+    margin-top: 8px;
+    padding: 8px;
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    border: 1px solid #fca5a5;
+    word-break: break-word;
+  }
+
+  :global([data-theme="dark"]) .tooltip-error {
+    background: #450a0a;
+    color: #fecaca;
+    border-color: #7f1d1d;
   }
 </style>
