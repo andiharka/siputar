@@ -18,6 +18,7 @@
 
   const tr = $derived(t());
   const currentPath = $derived($page.url.pathname);
+  let appVersion = $state<string>("...");
 
   async function openMiniPlayer() {
     await invoke("open_mini_player").catch(() => {});
@@ -51,16 +52,25 @@
         invoke("refresh_tray_icon").catch(() => {});
       }
     };
+    loadAppVersion();
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   });
+
+  async function loadAppVersion() {
+    try {
+      appVersion = await invoke<string>("get_app_version");
+    } catch {
+      appVersion = "?";
+    }
+  }
 
   // Silent background update check
   let updateAvailable = $state(false);
 
   onMount(async () => {
     // Small delay so app UI renders first
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise((r) => setTimeout(r, 3000));
     try {
       const update = await check();
       if (update) updateAvailable = true;
@@ -74,7 +84,7 @@
   <header class="header">
     <!-- <div class="header-left"> -->
     <div
-      style="display: inline-flex; gap: .5rem; align-items: center; width: 116px"
+      style="display: inline-flex; gap: .5rem; align-items: center; width: 154px"
     >
       <img src="/app-icon.png" alt="SIPUTAR" class="app-icon" />
       <div class="app-titles">
@@ -128,7 +138,7 @@
   </main>
 
   <footer class="footer">
-    &copy; 2026 Andi &ndash; Disperpusip Jawa Timur. All rights reserved.
+    v{appVersion} &copy; 2026 Andi &ndash; Disperpusip Jawa Timur. All rights reserved.
   </footer>
 </div>
 
@@ -272,7 +282,14 @@
   }
 
   @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.2); }
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.2);
+    }
   }
 </style>
