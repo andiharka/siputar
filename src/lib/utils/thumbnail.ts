@@ -47,7 +47,7 @@ export async function getVideoThumbnail(mediaId: string, filePath: string): Prom
     }, { once: true });
 
     video.addEventListener('error', () => resolve(null), { once: true });
-    video.src = convertFileSrc(filePath);
+    video.src = filePath.startsWith('/media/') ? filePath : convertFileSrc(filePath);
   });
 }
 
@@ -72,7 +72,7 @@ export async function getMediaDuration(mediaId: string, filePath: string, type: 
     }, { once: true });
 
     el.addEventListener('error', () => { el.src = ''; resolve(0); }, { once: true });
-    el.src = convertFileSrc(filePath);
+    el.src = filePath.startsWith('/media/') ? filePath : convertFileSrc(filePath);
   });
 }
 

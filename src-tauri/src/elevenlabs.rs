@@ -178,12 +178,12 @@ impl ElevenLabsClient {
     }
 
     fn get_api_key() -> Result<String, String> {
-        crate::keychain::get_api_key()?
-            .ok_or_else(|| "API key not configured".to_string())
+        crate::keychain::get_api_key()?.ok_or_else(|| "API key not configured".to_string())
     }
 
     pub async fn test_api_key(&self, key: &str) -> Result<bool, String> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/v1/user", BASE_URL))
             .header("xi-api-key", key)
             .send()
@@ -197,7 +197,8 @@ impl ElevenLabsClient {
         self.rate_limiter.wait().await;
         let api_key = Self::get_api_key()?;
 
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/v1/user/subscription", BASE_URL))
             .header("xi-api-key", &api_key)
             .send()
@@ -208,7 +209,8 @@ impl ElevenLabsClient {
             return Err(format!("API error: {}", response.status()));
         }
 
-        response.json::<UserSubscription>()
+        response
+            .json::<UserSubscription>()
             .await
             .map_err(|e| format!("Failed to parse response: {}", e))
     }
@@ -217,8 +219,9 @@ impl ElevenLabsClient {
         self.rate_limiter.wait().await;
         let api_key = Self::get_api_key()?;
 
-        let response = self.client
-            .get(format!("{}/v2/voices", BASE_URL))
+        let response = self
+            .client
+            .get(format!("{}/v1/voices", BASE_URL))
             .header("xi-api-key", &api_key)
             .send()
             .await
@@ -228,7 +231,8 @@ impl ElevenLabsClient {
             return Err(format!("API error: {}", response.status()));
         }
 
-        let voices_response: VoicesResponse = response.json()
+        let voices_response: VoicesResponse = response
+            .json()
             .await
             .map_err(|e| format!("Failed to parse response: {}", e))?;
 
@@ -239,7 +243,8 @@ impl ElevenLabsClient {
         self.rate_limiter.wait().await;
         let api_key = Self::get_api_key()?;
 
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/v1/models", BASE_URL))
             .header("xi-api-key", &api_key)
             .send()
@@ -250,30 +255,36 @@ impl ElevenLabsClient {
             return Err(format!("API error: {}", response.status()));
         }
 
-        response.json::<Vec<Model>>()
+        response
+            .json::<Vec<Model>>()
             .await
             .map_err(|e| format!("Failed to parse response: {}", e))
     }
 
-    pub async fn get_history(&self, page_size: Option<u32>, start_after: Option<String>) -> Result<HistoryResponse, String> {
+    pub async fn get_history(
+        &self,
+        page_size: Option<u32>,
+        start_after: Option<String>,
+    ) -> Result<HistoryResponse, String> {
         self.rate_limiter.wait().await;
         let api_key = Self::get_api_key()?;
 
         let mut url = format!("{}/v1/history", BASE_URL);
         let mut params = vec![];
-        
+
         if let Some(size) = page_size {
             params.push(format!("page_size={}", size));
         }
         if let Some(start) = start_after {
             params.push(format!("start_after_history_item_id={}", start));
         }
-        
+
         if !params.is_empty() {
             url = format!("{}?{}", url, params.join("&"));
         }
 
-        let response = self.client
+        let response = self
+            .client
             .get(&url)
             .header("xi-api-key", &api_key)
             .send()
@@ -284,7 +295,8 @@ impl ElevenLabsClient {
             return Err(format!("API error: {}", response.status()));
         }
 
-        response.json::<HistoryResponse>()
+        response
+            .json::<HistoryResponse>()
             .await
             .map_err(|e| format!("Failed to parse response: {}", e))
     }
@@ -304,7 +316,8 @@ impl ElevenLabsClient {
 
         // All voice settings (stability, similarity_boost, speed) go in the
         // voice_settings body — speed is NOT a query parameter.
-        let voice_settings = if stability.is_some() || similarity_boost.is_some() || speed.is_some() {
+        let voice_settings = if stability.is_some() || similarity_boost.is_some() || speed.is_some()
+        {
             Some(VoiceSettings {
                 stability,
                 similarity_boost,
@@ -323,9 +336,13 @@ impl ElevenLabsClient {
             voice_settings,
         };
 
-        let url = format!("{}/v1/text-to-speech/{}?output_format=mp3_44100_128", BASE_URL, voice_id);
+        let url = format!(
+            "{}/v1/text-to-speech/{}?output_format=mp3_44100_128",
+            BASE_URL, voice_id
+        );
 
-        let response = self.client
+        let response = self
+            .client
             .post(&url)
             .header("xi-api-key", &api_key)
             .header("Content-Type", "application/json")
@@ -339,7 +356,8 @@ impl ElevenLabsClient {
             return Err(format!("API error: {}", error_text));
         }
 
-        response.bytes()
+        response
+            .bytes()
             .await
             .map(|b| b.to_vec())
             .map_err(|e| format!("Failed to read audio data: {}", e))
@@ -349,7 +367,8 @@ impl ElevenLabsClient {
         self.rate_limiter.wait().await;
         let api_key = Self::get_api_key()?;
 
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/v1/history/{}/audio", BASE_URL, history_item_id))
             .header("xi-api-key", &api_key)
             .send()
@@ -360,7 +379,8 @@ impl ElevenLabsClient {
             return Err(format!("API error: {}", response.status()));
         }
 
-        response.bytes()
+        response
+            .bytes()
             .await
             .map(|b| b.to_vec())
             .map_err(|e| format!("Failed to read audio data: {}", e))
@@ -370,7 +390,8 @@ impl ElevenLabsClient {
         self.rate_limiter.wait().await;
         let api_key = Self::get_api_key()?;
 
-        let response = self.client
+        let response = self
+            .client
             .delete(format!("{}/v1/history/{}", BASE_URL, history_item_id))
             .header("xi-api-key", &api_key)
             .send()

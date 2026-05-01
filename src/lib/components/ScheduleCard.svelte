@@ -17,6 +17,7 @@
     IconBellOff,
     IconPencil,
     IconPlayerPlay,
+    IconMusic,
   } from "@tabler/icons-svelte";
 
   let {
@@ -84,6 +85,10 @@
 
   function handleOpenSettings() {
     openPanel({ type: "schedule", scheduleId: schedule.id });
+  }
+
+  function handleAddDefaultMedia() {
+    openPanel({ type: "default-media", scheduleId: schedule.id });
   }
 </script>
 
@@ -195,6 +200,15 @@
       <IconPlus size={18} />
       <span class="add-label">{tr.media.addMedia}</span>
     </button>
+
+    <button
+      class="add-media-btn default-media-btn"
+      onclick={handleAddDefaultMedia}
+      title={tr.media.defaultMedia || "Default Media"}
+    >
+      <IconMusic size={18} />
+      <span class="add-label">{tr.media.defaultMedia || "Default Media"}</span>
+    </button>
   </div>
 </article>
 
@@ -254,8 +268,8 @@
     transition: all 0.15s;
   }
   .time-block:hover {
-    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-    background: var(--color-surface-2);
+    background: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
   }
   .time-main {
     text-align: left;
@@ -364,9 +378,15 @@
   .add-media-btn:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 5%, transparent);
   }
   .add-label {
     font-size: 10px;
     font-weight: 500;
+  }
+  .default-media-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 5%, transparent);
   }
 </style>

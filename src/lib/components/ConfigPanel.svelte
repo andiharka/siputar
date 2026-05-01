@@ -10,6 +10,7 @@
   import ScheduleEditor from "./ScheduleEditor.svelte";
   import MediaEditor from "./MediaEditor.svelte";
   import SettingsPanel from "./SettingsPanel.svelte";
+  import DefaultMediaPicker from "./DefaultMediaPicker.svelte";
   import { IconX } from "@tabler/icons-svelte";
 
   const tr = $derived(t());
@@ -21,6 +22,7 @@
     if (sel.type === "settings") return tr.settings.title;
     if (sel.type === "schedule") return tr.schedule.title;
     if (sel.type === "media") return tr.media.title;
+    if (sel.type === "default-media") return tr.media.defaultMedia || "Default Media";
     return "";
   });
 
@@ -60,6 +62,8 @@
       <ScheduleEditor scheduleId={sel.scheduleId} />
     {:else if sel.type === "media" && sel.scheduleId && sel.mediaId}
       <MediaEditor scheduleId={sel.scheduleId} mediaId={sel.mediaId} />
+    {:else if sel.type === "default-media" && sel.scheduleId}
+      <DefaultMediaPicker scheduleId={sel.scheduleId} />
     {/if}
   </div>
 

@@ -213,6 +213,7 @@ async function validateMediaPaths(): Promise<void> {
     const missing = new Set<string>();
     for (const schedule of _config.schedules) {
       for (const media of schedule.media) {
+        if (media.path.startsWith('/media/')) continue;
         const ok = await invoke<boolean>('check_file_exists', { path: media.path }).catch(() => true);
         if (!ok) missing.add(media.path);
       }

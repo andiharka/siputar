@@ -28,7 +28,9 @@ body {
   --color-text: #1a1a1a;
   --color-text-muted: #6b7280;
   --color-primary: #a32ec0;
+  --color-accent: #e09501ff;
   --color-primary-hover: #7b2b8d;
+  --color-accent-hover: #cfa124ff;
   --color-danger: #dc2626;
   --color-danger-hover: #b91c1c;
   --color-success: #16a34a;
@@ -48,6 +50,8 @@ body {
   --color-surface: #1f2937;
   --color-surface-2: #374151;
   --color-surface-3: #2d3748;
+    --color-accent: #f7d065ff;
+  --color-accent-hover: #d9b03d;
   --color-border: #374151;
   --color-text: #f9fafb;
   --color-text-muted: #9ca3af;

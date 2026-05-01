@@ -28,6 +28,8 @@ export const en: Translations = {
   media: {
     title: 'Media',
     addMedia: 'Add Media',
+    defaultMedia: 'Default Ringtone',
+    defaultMediaDescription: 'Press play to try the sound, press add to add this media to the schedule:',
     loopCount: 'Loop Count',
     volume: 'Volume',
     fileMissing: 'File not found',
@@ -74,7 +76,6 @@ export const en: Translations = {
       playbackStopped: 'Playback stopped',
     },
     update: {
-      title: 'About & Updates',
       currentVersion: 'Current Version',
       checkForUpdates: 'Check for Updates',
       checking: 'Checking...',

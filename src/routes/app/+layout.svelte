@@ -88,7 +88,13 @@
     >
       <img src="/app-icon.png" alt="SIPUTAR" class="app-icon" />
       <div class="app-titles">
-        <h1 class="app-title">{tr.app.name}</h1>
+        <h1 class="app-title">
+          {tr.app.name}
+          <span
+            style="font-size: 12px;  font-weight: 500; color: var(--color-text-muted)"
+            >v{appVersion}</span
+          >
+        </h1>
         <span class="app-long-title">{tr.app.longName}</span>
       </div>
     </div>
@@ -138,7 +144,7 @@
   </main>
 
   <footer class="footer">
-    v{appVersion} &copy; 2026 Andi &ndash; Disperpusip Jawa Timur. All rights reserved.
+    &copy; 2026 Andi &ndash; Disperpusip Jawa Timur. All rights reserved.
   </footer>
 </div>
 

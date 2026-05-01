@@ -20,7 +20,11 @@
   import { check } from "@tauri-apps/plugin-updater";
   import { relaunch } from "@tauri-apps/plugin-process";
   import { onMount } from "svelte";
-  import { IconRefresh, IconDownload, IconArrowRight } from "@tabler/icons-svelte";
+  import {
+    IconRefresh,
+    IconDownload,
+    IconArrowRight,
+  } from "@tabler/icons-svelte";
 
   interface ActivityLogEntry {
     ts: string;
@@ -46,15 +50,23 @@
   let loadingLogs = $state(false);
 
   // Update state
-  type UpdateStatus = 'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'installing' | 'restart-required' | 'failed';
-  let updateStatus = $state<UpdateStatus>('idle');
+  type UpdateStatus =
+    | "idle"
+    | "checking"
+    | "up-to-date"
+    | "available"
+    | "downloading"
+    | "installing"
+    | "restart-required"
+    | "failed";
+  let updateStatus = $state<UpdateStatus>("idle");
   let updateVersion = $state<string | null>(null);
   let updateNotes = $state<string | null>(null);
   let downloadProgress = $state(0);
   let downloadTotal = $state(0);
   let updateError = $state<string | null>(null);
   let pendingUpdate = $state<Awaited<ReturnType<typeof check>> | null>(null);
-  let appVersion = $state<string>('...');
+  let appVersion = $state<string>("...");
 
   const filteredLogs = $derived(
     logFilter === "all"
@@ -69,9 +81,9 @@
 
   async function loadAppVersion() {
     try {
-      appVersion = await invoke<string>('get_app_version');
+      appVersion = await invoke<string>("get_app_version");
     } catch {
-      appVersion = '?';
+      appVersion = "?";
     }
   }
 
@@ -272,7 +284,7 @@
     }
   }
   async function handleCheckForUpdates() {
-    updateStatus = 'checking';
+    updateStatus = "checking";
     updateError = null;
     try {
       const update = await check();
@@ -280,34 +292,34 @@
         pendingUpdate = update;
         updateVersion = update.version;
         updateNotes = update.body ?? null;
-        updateStatus = 'available';
+        updateStatus = "available";
       } else {
-        updateStatus = 'up-to-date';
+        updateStatus = "up-to-date";
       }
     } catch (e) {
-      updateStatus = 'failed';
+      updateStatus = "failed";
       updateError = e instanceof Error ? e.message : String(e);
     }
   }
 
   async function handleInstallUpdate() {
     if (!pendingUpdate) return;
-    updateStatus = 'downloading';
+    updateStatus = "downloading";
     downloadProgress = 0;
     downloadTotal = 0;
     try {
       await pendingUpdate.downloadAndInstall((event) => {
-        if (event.event === 'Started') {
+        if (event.event === "Started") {
           downloadTotal = event.data.contentLength ?? 0;
-        } else if (event.event === 'Progress') {
+        } else if (event.event === "Progress") {
           downloadProgress += event.data.chunkLength;
-        } else if (event.event === 'Finished') {
-          updateStatus = 'restart-required';
+        } else if (event.event === "Finished") {
+          updateStatus = "restart-required";
         }
       });
-      updateStatus = 'restart-required';
+      updateStatus = "restart-required";
     } catch (e) {
-      updateStatus = 'failed';
+      updateStatus = "failed";
       updateError = e instanceof Error ? e.message : String(e);
     }
   }
@@ -317,15 +329,104 @@
   }
 
   function formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) return "0 B";
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB'];
+    const sizes = ["B", "KB", "MB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
   }
 </script>
 
 <div class="settings">
+  <!-- About & Updates -->
+  <div class="field">
+    <div class="field-row" style="margin-bottom: 12px;">
+      <span class="field-label" style="margin-bottom: 0;"
+        >{tr.settings.update.currentVersion}</span
+      >
+      <span class="version-badge">v{appVersion}</span>
+    </div>
+
+    {#if updateStatus === "idle" || updateStatus === "up-to-date" || updateStatus === "failed"}
+      <button
+        class="btn btn-ghost btn-sm"
+        onclick={handleCheckForUpdates}
+        style="width: 100%; padding: .5rem .75rem;"
+      >
+        <IconRefresh size={14} />
+        {tr.settings.update.checkForUpdates}
+      </button>
+      {#if updateStatus === "up-to-date"}
+        <div class="update-message update-success">
+          ✓ {tr.settings.update.upToDate}
+        </div>
+      {/if}
+      {#if updateStatus === "failed"}
+        <div class="update-message update-error">
+          {tr.settings.update.failed}{updateError ? `: ${updateError}` : ""}
+        </div>
+      {/if}
+    {:else if updateStatus === "checking"}
+      <div class="update-message">
+        <IconLoader size={14} class="spinning" />
+        {tr.settings.update.checking}
+      </div>
+    {:else if updateStatus === "available"}
+      <div class="update-available">
+        <div class="update-version">
+          🎉 {tr.settings.update.available}: <strong>v{updateVersion}</strong>
+        </div>
+        {#if updateNotes}
+          <details class="release-notes">
+            <summary>{tr.settings.update.releaseNotes}</summary>
+            <pre class="release-notes-body">{updateNotes}</pre>
+          </details>
+        {/if}
+        <button
+          class="btn btn-primary btn-sm"
+          onclick={handleInstallUpdate}
+          style="width: 100%; margin-top: 8px;"
+        >
+          <IconDownload size={14} />
+          {tr.settings.update.downloadAndInstall}
+        </button>
+      </div>
+    {:else if updateStatus === "downloading"}
+      <div class="update-progress">
+        <div class="progress-label">
+          <span>{tr.settings.update.downloading}</span>
+          {#if downloadTotal > 0}
+            <span
+              >{formatBytes(downloadProgress)} / {formatBytes(
+                downloadTotal,
+              )}</span
+            >
+          {/if}
+        </div>
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            style="width: {downloadTotal > 0
+              ? ((downloadProgress / downloadTotal) * 100).toFixed(0)
+              : 0}%"
+          ></div>
+        </div>
+      </div>
+    {:else if updateStatus === "restart-required"}
+      <div class="update-message update-success">
+        ✓ {tr.settings.update.restartRequired}
+      </div>
+      <button
+        class="btn btn-primary btn-sm"
+        onclick={handleRelaunch}
+        style="width: 100%; margin-top: 8px;"
+      >
+        <IconArrowRight size={14} />
+        {tr.settings.update.restartNow}
+      </button>
+    {/if}
+  </div>
+
   <!-- Theme -->
   <div class="field">
     <span class="field-label">{tr.settings.theme}</span>
@@ -457,11 +558,15 @@
       placeholder="Leave empty to show all voices"
       value={configStore.settings.elevenLabsCollectionId}
       onchange={async (e) => {
-        updateSettings({ elevenLabsCollectionId: (e.target as HTMLInputElement).value });
+        updateSettings({
+          elevenLabsCollectionId: (e.target as HTMLInputElement).value,
+        });
         await saveConfig();
       }}
     />
-    <span class="field-hint">Filter voices by collection ID in the generation panel.</span>
+    <span class="field-hint"
+      >Filter voices by collection ID in the generation panel.</span
+    >
   </div>
 
   <!-- Audio Folder -->
@@ -559,83 +664,6 @@
           {/if}
         </div>
       </div>
-    {/if}
-  </div>
-
-  <hr class="divider" />
-
-  <!-- About & Updates -->
-  <div class="update-section">
-    <h4 class="subsection-title">{tr.settings.update.title}</h4>
-
-    <div class="field field-row" style="margin-bottom: 12px;">
-      <span class="field-label" style="margin-bottom: 0;">{tr.settings.update.currentVersion}</span>
-      <span class="version-badge">v{appVersion}</span>
-    </div>
-
-    {#if updateStatus === 'idle' || updateStatus === 'up-to-date' || updateStatus === 'failed'}
-      <button
-        class="btn btn-ghost btn-sm"
-        onclick={handleCheckForUpdates}
-        style="width: 100%;"
-      >
-        <IconRefresh size={14} />
-        {tr.settings.update.checkForUpdates}
-      </button>
-      {#if updateStatus === 'up-to-date'}
-        <div class="update-message update-success">✓ {tr.settings.update.upToDate}</div>
-      {/if}
-      {#if updateStatus === 'failed'}
-        <div class="update-message update-error">{tr.settings.update.failed}{updateError ? `: ${updateError}` : ''}</div>
-      {/if}
-
-    {:else if updateStatus === 'checking'}
-      <div class="update-message">
-        <IconLoader size={14} class="spinning" />
-        {tr.settings.update.checking}
-      </div>
-
-    {:else if updateStatus === 'available'}
-      <div class="update-available">
-        <div class="update-version">
-          🎉 {tr.settings.update.available}: <strong>v{updateVersion}</strong>
-        </div>
-        {#if updateNotes}
-          <details class="release-notes">
-            <summary>{tr.settings.update.releaseNotes}</summary>
-            <pre class="release-notes-body">{updateNotes}</pre>
-          </details>
-        {/if}
-        <button class="btn btn-primary btn-sm" onclick={handleInstallUpdate} style="width: 100%; margin-top: 8px;">
-          <IconDownload size={14} />
-          {tr.settings.update.downloadAndInstall}
-        </button>
-      </div>
-
-    {:else if updateStatus === 'downloading'}
-      <div class="update-progress">
-        <div class="progress-label">
-          <span>{tr.settings.update.downloading}</span>
-          {#if downloadTotal > 0}
-            <span>{formatBytes(downloadProgress)} / {formatBytes(downloadTotal)}</span>
-          {/if}
-        </div>
-        <div class="progress-bar">
-          <div
-            class="progress-fill"
-            style="width: {downloadTotal > 0 ? (downloadProgress / downloadTotal * 100).toFixed(0) : 0}%"
-          ></div>
-        </div>
-      </div>
-
-    {:else if updateStatus === 'restart-required'}
-      <div class="update-message update-success">
-        ✓ {tr.settings.update.restartRequired}
-      </div>
-      <button class="btn btn-primary btn-sm" onclick={handleRelaunch} style="width: 100%; margin-top: 8px;">
-        <IconArrowRight size={14} />
-        {tr.settings.update.restartNow}
-      </button>
     {/if}
   </div>
 </div>
@@ -898,17 +926,15 @@
     max-width: 200px;
   }
 
-  /* Update section */
-  .update-section {
-    padding-top: 4px;
-  }
-
   .version-badge {
     font-size: 12px;
     font-weight: 600;
     padding: 2px 8px;
     border-radius: 100px;
-    background: var(--color-primary-alpha, rgba(var(--color-primary-rgb, 99, 102, 241), 0.12));
+    background: var(
+      --color-primary-alpha,
+      rgba(var(--color-primary-rgb, 99, 102, 241), 0.12)
+    );
     color: var(--color-primary);
   }
 
@@ -921,15 +947,21 @@
     color: var(--color-text-muted);
   }
 
-  .update-success { color: #16a34a; }
-  :global([data-theme="dark"]) .update-success { color: #4ade80; }
+  .update-success {
+    color: #16a34a;
+  }
+  :global([data-theme="dark"]) .update-success {
+    color: #4ade80;
+  }
 
   .update-error {
     color: #dc2626;
     font-size: 11px;
     word-break: break-word;
   }
-  :global([data-theme="dark"]) .update-error { color: #f87171; }
+  :global([data-theme="dark"]) .update-error {
+    color: #f87171;
+  }
 
   .update-available {
     border: 1px solid var(--color-border);

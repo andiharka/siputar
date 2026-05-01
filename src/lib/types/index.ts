@@ -57,7 +57,7 @@ export interface PlaybackState {
   currentIndex: number;
 }
 
-export type SelectionType = 'schedule' | 'media' | 'settings' | null;
+export type SelectionType = 'schedule' | 'media' | 'settings' | 'default-media' | null;
 
 export interface Selection {
   type: SelectionType;

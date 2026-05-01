@@ -12,7 +12,10 @@
   import {
     IconChevronLeft,
     IconChevronRight,
+    IconMicrophone,
+    IconMusic,
     IconPencil,
+    IconVideo,
   } from "@tabler/icons-svelte";
   import { formatDuration } from "$lib/utils/duration.js";
 
@@ -34,7 +37,10 @@
 
   const type = $derived(getMediaType(media.path));
   const fileName = $derived(getFileName(media.path));
-  const isMissing = $derived(validationStore.isMissing(media.path));
+  const isDefaultMedia = $derived(media.path.startsWith("/media/"));
+  const isMissing = $derived(
+    !isDefaultMedia && validationStore.isMissing(media.path),
+  );
 
   let thumbnail = $state<string | null>(null);
   let duration = $state(0);
@@ -62,6 +68,7 @@
 <div
   class="chip"
   class:missing={isMissing}
+  class:default-media={isDefaultMedia}
   onclick={handleClick}
   role="button"
   tabindex="0"
@@ -73,10 +80,12 @@
       {#if thumbnail}
         <img src={thumbnail} alt={fileName} class="thumb-img" />
       {:else}
-        <div class="thumb-placeholder video">▶</div>
+        <div class="thumb-placeholder"><IconVideo size={24} /></div>
       {/if}
+    {:else if isDefaultMedia}
+      <div class="thumb-placeholder audio"><IconMusic size={24} /></div>
     {:else}
-      <div class="thumb-placeholder audio">♪</div>
+      <div class="thumb-placeholder"><IconMicrophone size={24} /></div>
     {/if}
 
     <!-- Move buttons overlay (visible on hover) -->
@@ -113,9 +122,11 @@
   <div class="info">
     <span class="name" title={fileName}>{fileName}</span>
     <div class="meta-row">
-      {#if duration > 0}
-        <span class="duration-badge">{formatDuration(duration)}</span>
-      {/if}
+      <span class="duration-badge">
+        {#if duration > 0}
+          {formatDuration(duration)}
+        {/if}
+      </span>
       {#if isMissing}
         <span class="missing-badge">!</span>
       {:else if media.loopCount === 0}
@@ -146,6 +157,15 @@
   .chip.missing {
     border-color: var(--color-danger);
     opacity: 0.8;
+  }
+  .chip.default-media {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+  .chip.default-media .thumb {
+    aspect-ratio: none;
+  }
+  .chip.default-media .thumb-placeholder.audio {
+    background: color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
 
   .thumb {

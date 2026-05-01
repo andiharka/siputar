@@ -67,7 +67,7 @@
 
   onMount(async () => {
     console.log("[MiniPlayer] Component mounted");
-    
+
     // Add F12 keyboard shortcut for DevTools
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "F12") {
@@ -79,10 +79,12 @@
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-    
+
     // Store cleanup function for onDestroy
-    unlisteners.push(() => window.removeEventListener("keydown", handleKeyDown));
-    
+    unlisteners.push(() =>
+      window.removeEventListener("keydown", handleKeyDown),
+    );
+
     unlisteners.push(
       await listen<{
         path: string;
@@ -110,16 +112,23 @@
 
         const el = payload.type === "video" ? videoEl : audioEl;
         if (el) {
-          const assetUrl = convertFileSrc(payload.path);
+          const assetUrl = payload.path.startsWith("/media/")
+            ? payload.path
+            : convertFileSrc(payload.path);
           console.log("[MiniPlayer] Loading media:", payload.path);
           console.log("[MiniPlayer] Converted URL:", assetUrl);
           el.src = assetUrl;
           el.volume = payload.volume;
           el.play().catch((err) => {
             console.error("[MiniPlayer] Failed to play media:", err);
+            // If play fails (e.g. 404 or unsupported), emit ended to skip
+            handleEnded();
           });
         } else {
-          console.error("[MiniPlayer] Media element not found for type:", payload.type);
+          console.error(
+            "[MiniPlayer] Media element not found for type:",
+            payload.type,
+          );
         }
         scrollToActive();
       }),
@@ -161,9 +170,13 @@
     unlisteners.forEach((u) => u());
   });
 
+  let _ending = false;
   function handleEnded() {
+    if (_ending) return;
+    _ending = true;
     console.log("[MiniPlayer] Media ended");
     emit("playback:ended", {});
+    setTimeout(() => { _ending = false; }, 500);
   }
   async function handlePause() {
     console.log("[MiniPlayer] Pause button clicked");
@@ -186,6 +199,8 @@
       networkState: target.networkState,
       readyState: target.readyState,
     });
+    // Skip to next item if media fails to load
+    handleEnded();
   }
 
   function handleMediaLoaded(e: Event) {
@@ -217,8 +232,8 @@
   {:else}
     <!-- Audio: just a dark placeholder -->
     <div class="media-area audio-placeholder" data-tauri-drag-region>
-      <audio 
-        bind:this={audioEl} 
+      <audio
+        bind:this={audioEl}
         onended={handleEnded}
         onerror={handleMediaError}
         onloadeddata={handleMediaLoaded}
