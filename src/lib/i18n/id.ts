@@ -93,7 +93,7 @@ export const id: Translations = {
     theme: 'Tema',
     themeLight: 'Terang',
     themeDark: 'Gelap',
-    themeAuto: 'Otomatis',
+    themeAuto: 'Sistem',
     language: 'Bahasa',
     runOnStartup: 'Jalankan saat komputer menyala',
     apiKey: 'API Key ElevenLabs',

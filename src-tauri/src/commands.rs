@@ -360,6 +360,7 @@ pub fn get_tts_history(db: DbArg<'_>) -> Result<Vec<TTSHistoryItem>, String> {
 pub async fn generate_speech(
     app: AppHandle,
     request: TTSGenerateRequest,
+    audio_folder: Option<String>,
     client: ElevenLabsArg<'_>,
     db: DbArg<'_>,
 ) -> Result<TTSHistoryItem, String> {
@@ -437,7 +438,7 @@ pub async fn generate_speech(
         match result {
             Ok(audio_data) => {
                 // Get audio folder from config
-                let audio_folder = get_audio_folder(&app_handle);
+                let audio_folder = get_audio_folder(&app_handle, audio_folder);
                 // Prefer user's custom name over voice name for the filename
                 let base_name = req.name
                     .as_deref()
@@ -483,7 +484,13 @@ fn update_tts_status(db: &Arc<Mutex<rusqlite::Connection>>, id: &str, status: &s
     }
 }
 
-fn get_audio_folder(app: &AppHandle) -> String {
+fn get_audio_folder(app: &AppHandle, folder_override: Option<String>) -> String {
+    if let Some(folder) = folder_override {
+        if !folder.trim().is_empty() {
+            return folder;
+        }
+    }
+
     // Try to get from app data dir, fallback to Documents
     app.path().app_data_dir()
         .map(|p| p.join("audio").to_string_lossy().to_string())
@@ -497,13 +504,14 @@ fn get_audio_folder(app: &AppHandle) -> String {
 #[tauri::command]
 pub async fn download_history_audio(
     history_item_id: String,
+    audio_folder: Option<String>,
     app: AppHandle,
     client: ElevenLabsArg<'_>,
     db: DbArg<'_>,
 ) -> Result<String, String> {
     let audio_data = client.download_audio(&history_item_id).await?;
 
-    let audio_folder = get_audio_folder(&app);
+    let audio_folder = get_audio_folder(&app, audio_folder);
     let filename = format!("downloaded_{}.mp3", chrono::Utc::now().format("%Y%m%d_%H%M%S"));
     let file_path = std::path::Path::new(&audio_folder).join(&filename);
 

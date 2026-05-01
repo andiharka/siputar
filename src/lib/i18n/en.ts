@@ -42,7 +42,7 @@ export const en: Translations = {
     theme: 'Theme',
     themeLight: 'Light',
     themeDark: 'Dark',
-    themeAuto: 'Auto',
+    themeAuto: 'System',
     language: 'Language',
     runOnStartup: 'Run on startup',
     apiKey: 'ElevenLabs API Key',

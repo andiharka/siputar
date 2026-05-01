@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { closeTTSPanel as closePanel } from '$lib/stores/ui.svelte.js';
+import { configStore } from '$lib/stores/config.svelte.js';
 import type {
   TTSHistoryItem,
   ElevenLabsVoice,
@@ -128,7 +129,10 @@ export async function generateSpeech(request: TTSGenerateRequest): Promise<void>
   closePanel();
 
   try {
-    const item = await invoke<TTSHistoryItem>('generate_speech', { request });
+    const item = await invoke<TTSHistoryItem>('generate_speech', { 
+      request,
+      audioFolder: configStore.settings.ttsAudioFolder
+    });
     _generatingId = item.id;
     _history = [item, ..._history];
 
@@ -170,7 +174,10 @@ async function waitForGeneration(id: string): Promise<void> {
 
 export async function downloadAudio(historyItemId: string): Promise<void> {
   try {
-    const filePath = await invoke<string>('download_history_audio', { historyItemId });
+    const filePath = await invoke<string>('download_history_audio', { 
+      historyItemId,
+      audioFolder: configStore.settings.ttsAudioFolder 
+    });
     await loadTTSHistory();
     return;
   } catch (e) {

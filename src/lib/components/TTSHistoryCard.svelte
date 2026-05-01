@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n/index.svelte.js";
-  import { convertFileSrc } from "@tauri-apps/api/core";
+  import { convertFileSrc, invoke } from "@tauri-apps/api/core";
   import {
     ttsStore,
     downloadAudio,
@@ -86,6 +86,12 @@
     if (isPlaying) {
       audioElement?.pause();
       ttsStore.playingId = null;
+      return;
+    }
+
+    const exists = await invoke<boolean>("check_file_exists", { path: item.localFilePath }).catch(() => false);
+    if (!exists) {
+      alert(tr.media.fileMissing || "File not found");
       return;
     }
 

@@ -24,6 +24,10 @@
     IconRefresh,
     IconDownload,
     IconArrowRight,
+    IconSun,
+    IconMoon,
+    IconDeviceDesktop,
+    IconLanguage,
   } from "@tabler/icons-svelte";
 
   interface ActivityLogEntry {
@@ -126,6 +130,7 @@
       } else {
         await invoke("plugin:autostart|disable");
       }
+      await saveConfig();
     } catch {
       /* not in Tauri context during dev */
     }
@@ -200,9 +205,10 @@
 
       if (selected && typeof selected === "string") {
         updateSettings({ ttsAudioFolder: selected });
+        await saveConfig();
       }
-    } catch {
-      /* cancelled or error */
+    } catch (e) {
+      console.error("Failed to open dialog:", e);
     }
   }
 
@@ -430,47 +436,78 @@
   <!-- Theme -->
   <div class="field">
     <span class="field-label">{tr.settings.theme}</span>
-    <div class="radio-group">
-      {#each [["light", tr.settings.themeLight], ["dark", tr.settings.themeDark], ["auto", tr.settings.themeAuto]] as [val, label]}
-        <label class="radio-item">
-          <input
-            type="radio"
-            name="theme"
-            value={val}
-            checked={configStore.settings.theme === val}
-            onchange={() =>
-              updateSettings({ theme: val as "light" | "dark" | "auto" })}
-          />
-          <span>{label}</span>
-        </label>
-      {/each}
+    <div class="btn-group" style="width: 100%;">
+      <button
+        class="btn {configStore.settings.theme === 'light'
+          ? 'btn-primary'
+          : 'btn-ghost'} btn-theme"
+        onclick={async () => {
+          updateSettings({ theme: "light" });
+          await saveConfig();
+        }}
+      >
+        <IconSun size={16} />
+        <div>
+          {tr.settings.themeLight}
+        </div>
+      </button>
+      <button
+        class="btn {configStore.settings.theme === 'dark'
+          ? 'btn-primary'
+          : 'btn-ghost'} btn-theme"
+        onclick={async () => {
+          updateSettings({ theme: "dark" });
+          await saveConfig();
+        }}
+      >
+        <IconMoon size={16} />
+        {tr.settings.themeDark}
+      </button>
+      <button
+        class="btn {configStore.settings.theme === 'auto'
+          ? 'btn-primary'
+          : 'btn-ghost'} btn-theme"
+        onclick={async () => {
+          updateSettings({ theme: "auto" });
+          await saveConfig();
+        }}
+      >
+        <IconDeviceDesktop size={16} />
+        {tr.settings.themeAuto}
+      </button>
     </div>
   </div>
 
   <!-- Language -->
   <div class="field">
     <span class="field-label">{tr.settings.language}</span>
-    <div class="radio-group">
-      <label class="radio-item">
-        <input
-          type="radio"
-          name="lang"
-          value="id"
-          checked={configStore.settings.language === "id"}
-          onchange={() => updateSettings({ language: "id" })}
-        />
-        <span>Bahasa Indonesia</span>
-      </label>
-      <label class="radio-item">
-        <input
-          type="radio"
-          name="lang"
-          value="en"
-          checked={configStore.settings.language === "en"}
-          onchange={() => updateSettings({ language: "en" })}
-        />
-        <span>English</span>
-      </label>
+    <div class="btn-group" style="width: 100%;">
+      <button
+        class="btn {configStore.settings.language === 'id'
+          ? 'btn-primary'
+          : 'btn-ghost'}"
+        style="flex: 1; justify-content: center;"
+        onclick={async () => {
+          updateSettings({ language: "id" });
+          await saveConfig();
+        }}
+      >
+        <IconLanguage size={16} />
+        Indonesia
+      </button>
+      <button
+        class="btn {configStore.settings.language === 'en'
+          ? 'btn-primary'
+          : 'btn-ghost'}"
+        style="flex: 1; justify-content: center;"
+        onclick={async () => {
+          updateSettings({ language: "en" });
+          await saveConfig();
+        }}
+      >
+        <IconLanguage size={16} />
+        English
+      </button>
     </div>
   </div>
 
@@ -704,20 +741,12 @@
   .field-row .field-label {
     margin-bottom: 0;
   }
-  .radio-group {
+  .btn-theme {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-  }
-  .radio-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-size: 13px;
-  }
-  .radio-item input {
-    accent-color: var(--color-primary);
+    gap: 2px;
+    padding: 0.5rem 0.75rem;
   }
 
   .divider {
