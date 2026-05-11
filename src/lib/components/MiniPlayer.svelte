@@ -164,6 +164,12 @@
         }
       }),
     );
+
+    // Signal that all event listeners are registered and ready to receive playback events.
+    // This is consumed by the schedules page to avoid the Windows race condition where
+    // playback:start is emitted before this window has finished mounting.
+    await emit("mini-player:ready", {});
+    console.log("[MiniPlayer] Ready signal emitted");
   });
 
   onDestroy(() => {

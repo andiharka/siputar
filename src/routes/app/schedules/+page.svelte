@@ -146,8 +146,39 @@
       currentLoop: 0,
     });
     await invoke("open_mini_player").catch(() => {});
-    // Small delay to let the mini-player window initialize before sending media
-    setTimeout(() => playQueueItem(0), 300);
+
+    // Wait for the mini-player to signal it has mounted all its event listeners
+    // before emitting playback:start. This fixes a Windows race condition where
+    // WebView2 initialization (500ms–1500ms) causes the event to be dropped.
+    //
+    // Edge case: if the mini-player window was already open/mounted from a previous
+    // play session, it won't re-emit "mini-player:ready", so the fallback timeout
+    // (500ms) ensures playback still starts in that scenario.
+    const { listen: listenOnce } = await import("@tauri-apps/api/event");
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      const fallback = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          console.log("[Schedules] mini-player:ready fallback timeout fired");
+          resolve();
+        }
+      }, 500);
+
+      listenOnce("mini-player:ready", () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(fallback);
+          console.log("[Schedules] mini-player:ready signal received");
+          resolve();
+        }
+      }).then((unlisten) => {
+        // Auto-unlisten after we've resolved (either path)
+        Promise.resolve().then(unlisten);
+      });
+    });
+
+    playQueueItem(0);
   }
 
   async function playQueueItem(index: number) {
