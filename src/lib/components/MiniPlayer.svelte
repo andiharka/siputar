@@ -65,14 +65,19 @@
     return null;
   }
 
-  async function loadDurations(items: PlaylistItem[]) {
+  async function loadDurations(
+    items: PlaylistItem[],
+    shouldContinue: () => boolean = () => true,
+  ) {
     for (const item of items) {
+      if (!shouldContinue()) return;
       if (durations[item.path] !== undefined) continue;
       const d = await getMediaDuration(
         item.path,
         item.path,
         item.type as "video" | "audio",
       );
+      if (!shouldContinue()) return;
       durations = { ...durations, [item.path]: d };
     }
   }
@@ -140,6 +145,30 @@
     });
   }
 
+  // Resolve once the element is audibly rendering (the `playing` event fires
+  // only after play() has started and the media clock is advancing), so a
+  // failed startup is detected instead of silently counting as playback.
+  function waitUntilPlaying(el: HTMLMediaElement, timeoutMs = 3000): Promise<void> {
+    if (!el.paused) return Promise.resolve();
+    return new Promise((resolve) => {
+      const onPlaying = () => finish(true);
+      const onAbort = () => finish(false);
+
+      function finish(success: boolean) {
+        clearTimeout(timeout);
+        el.removeEventListener("playing", onPlaying);
+        el.removeEventListener("pause", onAbort);
+        el.removeEventListener("abort", onAbort);
+        if (success) resolve();
+      }
+
+      const timeout = setTimeout(() => finish(false), timeoutMs);
+      el.addEventListener("playing", onPlaying, { once: true });
+      el.addEventListener("pause", onAbort, { once: true });
+      el.addEventListener("abort", onAbort, { once: true });
+    });
+  }
+
   onMount(async () => {
     console.log("[MiniPlayer] Component mounted");
 
@@ -183,7 +212,6 @@
         scheduleTitle = payload.scheduleName ?? "";
         if (payload.playlist) {
           playlist = payload.playlist;
-          loadDurations(payload.playlist); // load async, don't await
         }
         if (payload.currentIndex !== undefined)
           currentIndex = payload.currentIndex;
@@ -215,6 +243,13 @@
             await waitUntilPlayable(el, payload.sessionId, payload.sequence);
             if (!isCurrent(payload.sessionId, payload.sequence)) return;
             await el.play();
+            // Confirm audible output actually started before doing any
+            // non-essential work (duration probing contends with media
+            // loading on WebView2 and delayed the first seconds of audio).
+            await waitUntilPlaying(el);
+            loadDurations(payload.playlist ?? [], () =>
+              isCurrent(payload.sessionId, payload.sequence),
+            );
           } catch (err) {
             console.error("[MiniPlayer] Failed to play media:", err);
             finishPlayback(
@@ -424,7 +459,6 @@
   <!-- Controls bar -->
   <div class="controls" data-tauri-drag-region>
     <div class="info" data-tauri-drag-region title={pb.mediaPath ?? ""}>
-      <span class="status-dot" class:playing={pb.status === "playing"}></span>
       <div class="title-block">
         <span class="schedule-title">{titleText}</span>
         {#if scheduleTitle && fileName}
@@ -625,17 +659,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: #888;
-  }
-  .status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #555;
-    flex-shrink: 0;
-    transition: 0.2s;
-  }
-  .status-dot.playing {
-    background: #4ade80;
   }
 
   .buttons {
