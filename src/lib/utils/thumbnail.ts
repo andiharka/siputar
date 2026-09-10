@@ -51,27 +51,46 @@ export async function getVideoThumbnail(mediaId: string, filePath: string): Prom
   });
 }
 
-/** Cache: mediaId → duration in seconds */
+/** Cache: key (mediaId or filePath) → duration in seconds */
 const durationCache = new Map<string, number>();
 
-/** Load media metadata to get duration in seconds. Cached by mediaId. */
+/** Load media metadata to get duration in seconds. Cached by mediaId and filePath. */
 export async function getMediaDuration(mediaId: string, filePath: string, type: 'video' | 'audio'): Promise<number> {
   if (durationCache.has(mediaId)) return durationCache.get(mediaId)!;
+  if (durationCache.has(filePath)) return durationCache.get(filePath)!;
 
   return new Promise(resolve => {
+    let settled = false;
     const el = document.createElement(type);
     el.preload = 'metadata';
     if (type === 'video') (el as HTMLVideoElement).muted = true;
 
+    const cleanup = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      el.src = '';
+      el.load();
+    };
+
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve(0);
+    }, 5000);
+
     el.addEventListener('loadedmetadata', () => {
       const dur = isFinite(el.duration) ? el.duration : 0;
       durationCache.set(mediaId, dur);
-      el.src = '';
-      el.load();
+      durationCache.set(filePath, dur);
+      cleanup();
       resolve(dur);
     }, { once: true });
 
-    el.addEventListener('error', () => { el.src = ''; resolve(0); }, { once: true });
+    el.addEventListener('error', () => {
+      cleanup();
+      resolve(0);
+    }, { once: true });
+
     el.src = filePath.startsWith('/media/') ? filePath : convertFileSrc(filePath);
   });
 }

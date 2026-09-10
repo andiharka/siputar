@@ -8,6 +8,7 @@
     setPlaybackState,
   } from "$lib/stores/playback.svelte.js";
   import { getFileName, getMediaDuration } from "$lib/utils/thumbnail.js";
+  import { warmupAudioDevice } from "$lib/utils/audioWarmup.js";
   import { formatDuration } from "$lib/utils/duration.js";
   import { t } from "$lib/i18n/index.svelte.js";
   import type { UnlistenFn } from "@tauri-apps/api/event";
@@ -65,20 +66,30 @@
     return null;
   }
 
-  async function loadDurations(
+  async function loadDurationsDeferred(
     items: PlaylistItem[],
+    skipIndex: number = -1,
     shouldContinue: () => boolean = () => true,
   ) {
-    for (const item of items) {
+    for (let i = 0; i < items.length; i++) {
       if (!shouldContinue()) return;
+      if (i === skipIndex) continue;
+      const item = items[i];
       if (durations[item.path] !== undefined) continue;
+
+      // Small throttle interval so background metadata probing never saturates disk/IPC while playing
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      if (!shouldContinue()) return;
+
       const d = await getMediaDuration(
         item.path,
         item.path,
         item.type as "video" | "audio",
       );
       if (!shouldContinue()) return;
-      durations = { ...durations, [item.path]: d };
+      if (d > 0) {
+        durations = { ...durations, [item.path]: d };
+      }
     }
   }
 
@@ -145,32 +156,13 @@
     });
   }
 
-  // Resolve once the element is audibly rendering (the `playing` event fires
-  // only after play() has started and the media clock is advancing), so a
-  // failed startup is detected instead of silently counting as playback.
-  function waitUntilPlaying(el: HTMLMediaElement, timeoutMs = 3000): Promise<void> {
-    if (!el.paused) return Promise.resolve();
-    return new Promise((resolve) => {
-      const onPlaying = () => finish(true);
-      const onAbort = () => finish(false);
 
-      function finish(success: boolean) {
-        clearTimeout(timeout);
-        el.removeEventListener("playing", onPlaying);
-        el.removeEventListener("pause", onAbort);
-        el.removeEventListener("abort", onAbort);
-        if (success) resolve();
-      }
-
-      const timeout = setTimeout(() => finish(false), timeoutMs);
-      el.addEventListener("playing", onPlaying, { once: true });
-      el.addEventListener("pause", onAbort, { once: true });
-      el.addEventListener("abort", onAbort, { once: true });
-    });
-  }
 
   onMount(async () => {
     console.log("[MiniPlayer] Component mounted");
+
+    // Pre-warm audio subsystem on mount so WASAPI is initialized early
+    warmupAudioDevice().catch(() => {});
 
     // Add F12 keyboard shortcut for DevTools
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -242,14 +234,26 @@
           try {
             await waitUntilPlayable(el, payload.sessionId, payload.sequence);
             if (!isCurrent(payload.sessionId, payload.sequence)) return;
+
+            // Ensure Windows audio engine/WASAPI is awake and primed before playing
+            await warmupAudioDevice();
+            if (!isCurrent(payload.sessionId, payload.sequence)) return;
+
             await el.play();
-            // Confirm audible output actually started before doing any
-            // non-essential work (duration probing contends with media
-            // loading on WebView2 and delayed the first seconds of audio).
-            await waitUntilPlaying(el);
-            loadDurations(payload.playlist ?? [], () =>
-              isCurrent(payload.sessionId, payload.sequence),
-            );
+
+            // Populate active track duration immediately if already loaded
+            if (el.duration && isFinite(el.duration)) {
+              durations = { ...durations, [payload.path]: el.duration };
+            }
+
+            // Defer probing durations for the rest of the playlist in background
+            if (payload.playlist && payload.playlist.length > 1) {
+              loadDurationsDeferred(
+                payload.playlist,
+                payload.currentIndex ?? 0,
+                () => isCurrent(payload.sessionId, payload.sequence),
+              );
+            }
           } catch (err) {
             console.error("[MiniPlayer] Failed to play media:", err);
             finishPlayback(
@@ -312,6 +316,8 @@
         }
       }),
       await listen<{ requestId: string }>("mini-player:ready-request", ({ payload }) => {
+        // Pre-warm audio device while handshaking with schedules page
+        warmupAudioDevice().catch(() => {});
         emit("mini-player:ready", { requestId: payload.requestId });
       }),
     );
@@ -404,6 +410,9 @@
     const el = activeEl();
     if (el && el.duration && isFinite(el.duration)) {
       duration = el.duration;
+      if (pb.mediaPath) {
+        durations = { ...durations, [pb.mediaPath]: el.duration };
+      }
     }
   }
 
