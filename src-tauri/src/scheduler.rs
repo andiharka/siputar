@@ -1,4 +1,6 @@
-use chrono::{Datelike, Duration as ChronoDuration, Local, NaiveTime, Timelike};
+use chrono::{
+    DateTime, Datelike, Duration as ChronoDuration, Local, NaiveTime, TimeZone, Timelike,
+};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 use tokio::time::{sleep, Duration};
@@ -41,9 +43,9 @@ pub fn start_scheduler(app: AppHandle, state: Arc<Mutex<SchedulerState>>) {
             if current_minute != last_minute {
                 last_minute = current_minute;
                 if let Ok(mut s) = state.lock() {
-                    // Only clear keys from a previous day
-                    let today_prefix = now.format("%Y-%m-%d").to_string();
-                    s.notified.retain(|k| k.starts_with(&today_prefix));
+                    // Keep yesterday too: a delayed tick can cross midnight.
+                    let oldest = check_from.format("%Y-%m-%d").to_string();
+                    s.notified.retain(|k| k.as_str() >= oldest.as_str());
                 }
             }
 
@@ -66,12 +68,12 @@ pub fn start_scheduler(app: AppHandle, state: Arc<Mutex<SchedulerState>>) {
                 if !schedule.enabled {
                     continue;
                 }
-                if !schedule.active_days.contains(&weekday) {
-                    continue;
-                }
-
-                // Check notifications
-                for notif in &schedule.notifications {
+                // Notifications are checked on today's active schedules.
+                for notif in schedule
+                    .notifications
+                    .iter()
+                    .filter(|_| schedule.active_days.contains(&weekday))
+                {
                     let notif_key = format!(
                         "{}-{}-notif{}",
                         now.format("%Y-%m-%d"),
@@ -105,8 +107,16 @@ pub fn start_scheduler(app: AppHandle, state: Arc<Mutex<SchedulerState>>) {
                     }
                 }
 
-                // Check playback trigger (match HH:MM:SS)
-                let play_key = format!("{}-{}-play", now.format("%Y-%m-%d"), schedule.id);
+                // Use the occurrence's date and weekday, including just before midnight.
+                let Some(target) = playback_occurrence(schedule, check_from, now) else {
+                    continue;
+                };
+                let play_key = format!(
+                    "{}-{}-{}-play",
+                    target.format("%Y-%m-%d"),
+                    schedule.id,
+                    schedule.time
+                );
                 let already_triggered = state
                     .lock()
                     .map(|s| s.notified.contains(&play_key))
@@ -115,32 +125,61 @@ pub fn start_scheduler(app: AppHandle, state: Arc<Mutex<SchedulerState>>) {
                     continue;
                 }
 
-                let should_play = NaiveTime::parse_from_str(&schedule.time, "%H:%M:%S")
-                    .ok()
-                    .and_then(|time| {
-                        now.date_naive()
-                            .and_time(time)
-                            .and_local_timezone(Local)
-                            .single()
-                    })
-                    .map(|target| target > check_from && target <= now)
-                    .unwrap_or(false);
-
-                if should_play {
-                    activity_log::log_playback_running(Some(&schedule.id));
-                    let _ = app.emit(
-                        "scheduler:play",
+                let delivered = app.emit_to(
+                    "main",
+                    "scheduler:play",
+                    serde_json::json!({
+                        "scheduleId": schedule.id,
+                    }),
+                );
+                if let Err(error) = delivered {
+                    activity_log::log_event(
+                        "playback",
+                        "failed",
                         serde_json::json!({
                             "scheduleId": schedule.id,
+                            "error": error.to_string(),
                         }),
                     );
-                    if let Ok(mut s) = state.lock() {
-                        s.notified.insert(play_key);
-                    }
+                } else if let Ok(mut s) = state.lock() {
+                    s.notified.insert(play_key);
                 }
             }
         }
     });
+}
+
+/// Find a due occurrence in a bounded elapsed interval. Use local calendar days
+/// (rather than subtracting 24 hours) so weekday checks also work at midnight.
+fn playback_occurrence<Tz: TimeZone>(
+    schedule: &Schedule,
+    last_check: DateTime<Tz>,
+    now: DateTime<Tz>,
+) -> Option<DateTime<Tz>> {
+    if !schedule.enabled || last_check >= now {
+        return None;
+    }
+    let check_from = std::cmp::max(last_check, now.clone() - ChronoDuration::seconds(10));
+    let time = NaiveTime::parse_from_str(&schedule.time, "%H:%M:%S").ok()?;
+    let mut date = check_from.date_naive();
+    while date <= now.date_naive() {
+        if schedule
+            .active_days
+            .contains(&(date.weekday().number_from_monday() as u8))
+        {
+            if let Some(target) = now
+                .timezone()
+                .from_local_datetime(&date.and_time(time))
+                .single()
+            {
+                if target > check_from && target <= now {
+                    return Some(target);
+                }
+            }
+        }
+        date = date.succ_opt()?;
+    }
+    None
 }
 
 /// Subtract `offset_minutes` from a "HH:MM:SS" time string, return "HH:MM"
@@ -154,4 +193,94 @@ fn calc_offset_time(time_str: &str, offset_minutes: i64) -> Option<String> {
     let total = h * 60 + m + offset_minutes;
     let total = ((total % 1440) + 1440) % 1440; // wrap around
     Some(format!("{:02}:{:02}", total / 60, total % 60))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{FixedOffset, TimeZone};
+
+    fn at(day: u32, hour: u32, minute: u32, second: u32) -> DateTime<FixedOffset> {
+        FixedOffset::east_opt(7 * 3600)
+            .unwrap()
+            .with_ymd_and_hms(2026, 9, day, hour, minute, second)
+            .unwrap()
+    }
+
+    fn schedule(time: &str, days: Vec<u8>) -> Schedule {
+        Schedule {
+            id: "test".into(),
+            name: None,
+            time: time.into(),
+            active_days: days,
+            notifications: vec![],
+            enabled: true,
+            loop_count: 1,
+            media: vec![],
+        }
+    }
+
+    #[test]
+    fn fires_at_due_second_and_after_delayed_tick() {
+        let s = schedule("08:00:00", vec![1]);
+        let before = at(21, 7, 59, 59);
+        let due = at(21, 8, 0, 0);
+        assert_eq!(playback_occurrence(&s, before, due), Some(due));
+        assert_eq!(playback_occurrence(&s, before, at(21, 8, 0, 4)), Some(due));
+        assert_eq!(playback_occurrence(&s, due, at(21, 8, 0, 1)), None);
+    }
+
+    #[test]
+    fn delayed_midnight_tick_uses_occurrence_weekday() {
+        let sunday = schedule("23:59:59", vec![7]);
+        let monday = schedule("00:00:00", vec![1]);
+        let before = at(20, 23, 59, 58);
+        let after = at(21, 0, 0, 2);
+        assert_eq!(
+            playback_occurrence(&sunday, before, after),
+            Some(at(20, 23, 59, 59))
+        );
+        assert_eq!(
+            playback_occurrence(&monday, before, after),
+            Some(at(21, 0, 0, 0))
+        );
+        assert_eq!(
+            playback_occurrence(&schedule("23:59:59", vec![1]), before, after),
+            None
+        );
+    }
+
+    #[test]
+    fn skips_disabled_inactive_invalid_and_future_schedules() {
+        let before = at(21, 7, 59, 59);
+        let after = at(21, 8, 0, 1);
+        let mut disabled = schedule("08:00:00", vec![1]);
+        disabled.enabled = false;
+        assert_eq!(playback_occurrence(&disabled, before, after), None);
+        assert_eq!(
+            playback_occurrence(&schedule("08:00:00", vec![2]), before, after),
+            None
+        );
+        assert_eq!(
+            playback_occurrence(&schedule("25:00:00", vec![1]), before, after),
+            None
+        );
+        assert_eq!(
+            playback_occurrence(&schedule("08:00:02", vec![1]), before, after),
+            None
+        );
+    }
+
+    #[test]
+    fn bounds_sleep_catchup_and_ignores_backward_clock_jump() {
+        let s = schedule("08:00:00", vec![1]);
+        assert_eq!(
+            playback_occurrence(&s, at(21, 7, 59, 59), at(21, 8, 0, 11)),
+            None
+        );
+        assert_eq!(
+            playback_occurrence(&s, at(21, 9, 0, 0), at(21, 8, 0, 0)),
+            None
+        );
+    }
 }

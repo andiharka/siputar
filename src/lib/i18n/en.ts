@@ -72,6 +72,7 @@ export const en: Translations = {
       voiceDelete: 'Audio deleted',
       voicePlay: 'Audio played',
       playbackRunning: 'Playback started',
+      playbackFailed: 'Playback failed',
       playbackPaused: 'Playback paused',
       playbackStopped: 'Playback stopped',
     },

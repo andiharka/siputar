@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../../app.css";
   import { onMount } from "svelte";
+  import { initializeScheduledPlayback } from "$lib/scheduledPlayback.js";
   import { page } from "$app/stores";
   import { invoke } from "@tauri-apps/api/core";
   import { configStore } from "$lib/stores/config.svelte.js";
@@ -18,6 +19,15 @@
 
   const tr = $derived(t());
   const currentPath = $derived($page.url.pathname);
+  let playbackReady = $state(false);
+  let startupError = $state("");
+  onMount(() => {
+    initializeScheduledPlayback().then(() => { playbackReady = true; }).catch((error) => {
+      console.error("Failed to initialize scheduled playback:", error);
+      startupError = String(error);
+    });
+  });
+
   let appVersion = $state<string>("...");
 
   async function openMiniPlayer() {
@@ -140,7 +150,11 @@
   </header>
 
   <main class="main-content">
-    {@render children()}
+    {#if playbackReady}
+      {@render children()}
+    {:else if startupError}
+      <p role="alert">{startupError}</p>
+    {/if}
   </main>
 
   <footer class="footer">

@@ -1,6 +1,6 @@
 {
   "name": "siputar",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "",
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "test": "bun test tests",
     "tauri": "tauri"
   },
   "license": "GPL-3.0",

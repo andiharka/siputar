@@ -18,6 +18,7 @@ export interface ActivityLogTranslations {
   voiceDelete: string;
   voicePlay: string;
   playbackRunning: string;
+  playbackFailed: string;
   playbackPaused: string;
   playbackStopped: string;
 }
@@ -123,6 +124,7 @@ export const id: Translations = {
       voiceDelete: 'Audio dihapus',
       voicePlay: 'Audio diputar',
       playbackRunning: 'Pemutaran dimulai',
+      playbackFailed: 'Pemutaran gagal',
       playbackPaused: 'Pemutaran dijeda',
       playbackStopped: 'Pemutaran dihentikan',
     },

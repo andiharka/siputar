@@ -25,6 +25,7 @@ let _loading = $state(true);
 export const configStore = {
   get config() { return _config; },
   get schedules() { return _config.schedules; },
+  get savedSchedules() { return _saved.schedules; },
   get settings() { return _config.settings; },
   get loading() { return _loading; },
   get isDirty() {
@@ -51,6 +52,7 @@ export async function loadConfig(): Promise<void> {
     validateMediaPaths();
   } catch (e) {
     console.error('Failed to load config:', e);
+    throw e;
   } finally {
     _loading = false;
   }
@@ -74,9 +76,7 @@ export function revertConfig(): void {
 }
 
 async function syncSchedulerState(): Promise<void> {
-  try {
-    await invoke('update_schedules', { schedules: $state.snapshot(_config.schedules) });
-  } catch (_) { /* Rust not running in dev without tauri */ }
+  await invoke('update_schedules', { schedules: $state.snapshot(_saved.schedules) });
 }
 
 // ── Settings Mutations ─────────────────────────────────────────────────────────

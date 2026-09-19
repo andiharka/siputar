@@ -270,6 +270,7 @@
       },
       playback: {
         running: tr.settings.activityLog.playbackRunning,
+        failed: tr.settings.activityLog.playbackFailed,
         paused: tr.settings.activityLog.playbackPaused,
         stopped: tr.settings.activityLog.playbackStopped,
       },

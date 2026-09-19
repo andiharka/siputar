@@ -49,6 +49,12 @@ jobs:
       - name: Run type check
         run: bun run check
 
+      - name: Test scheduled playback
+        run: bun run test
+
+      - name: Test scheduler timing
+        run: cargo test --manifest-path src-tauri/Cargo.toml --lib scheduler::tests
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:

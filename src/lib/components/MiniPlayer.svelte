@@ -240,6 +240,11 @@
             if (!isCurrent(payload.sessionId, payload.sequence)) return;
 
             await el.play();
+            if (!isCurrent(payload.sessionId, payload.sequence)) return;
+            void emit("playback:started", {
+              sessionId: payload.sessionId,
+              sequence: payload.sequence,
+            }).catch(console.error);
 
             // Populate active track duration immediately if already loaded
             if (el.duration && isFinite(el.duration)) {

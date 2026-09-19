@@ -86,11 +86,24 @@ pub fn resume_all(app: AppHandle, state: StateArg) {
 }
 
 #[tauri::command]
-pub fn update_schedules(schedules: Vec<crate::types::Schedule>, state: StateArg) {
-    if let Ok(mut s) = state.lock() {
-        s.schedules = schedules;
-        s.notified.clear(); // reset triggered set when config changes
+pub async fn update_schedules(
+    app: AppHandle,
+    schedules: Vec<crate::types::Schedule>,
+    state: StateArg<'_>,
+) -> Result<(), String> {
+    // Dialog-granted scopes are not persisted. Restore access to saved files,
+    // including Windows drive letters and UNC paths outside the home directory.
+    let scope = app.asset_protocol_scope();
+    for media in schedules.iter().flat_map(|schedule| &schedule.media) {
+        if !media.path.starts_with("/media/") {
+            scope.allow_file(&media.path).map_err(|error| error.to_string())?;
+        }
     }
+    let mut s = state.lock().map_err(|error| error.to_string())?;
+    s.schedules = schedules;
+    // Preserve delivered occurrences when settings are saved or routes change.
+    // Playback keys include the scheduled time, so moving a schedule still works.
+    Ok(())
 }
 
 #[tauri::command]
@@ -109,7 +122,16 @@ pub fn log_schedule_delete(id: String) {
 }
 
 #[tauri::command]
-pub fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
+pub fn report_playback(schedule_id: String, path: Option<String>, error: Option<String>) {
+    activity_log::log_event(
+        "playback",
+        if error.is_some() { "failed" } else { "running" },
+        serde_json::json!({ "scheduleId": schedule_id, "file": path, "error": error }),
+    );
+}
+
+#[tauri::command]
+pub async fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
     use std::io::Write;
     
     println!("[Mini-Player] Opening mini-player window...");

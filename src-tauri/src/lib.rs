@@ -132,6 +132,7 @@ pub fn run() {
             commands::log_schedule_create,
             commands::log_schedule_update,
             commands::log_schedule_delete,
+            commands::report_playback,
             commands::open_mini_player,
             commands::close_mini_player,
             commands::toggle_mini_player_devtools,

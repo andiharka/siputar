@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { t } from "$lib/i18n/index.svelte.js";
-  import { configStore, loadConfig } from "$lib/stores/config.svelte.js";
+  import { configStore } from "$lib/stores/config.svelte.js";
   import {
     ttsStore,
     loadTTSHistory,
@@ -32,7 +32,6 @@
 
   onMount(() => {
     (async () => {
-      await loadConfig();
       // Load local history from SQLite (no API call)
       await loadTTSHistory();
 
