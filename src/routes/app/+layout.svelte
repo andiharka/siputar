@@ -14,6 +14,8 @@
   } from "@tabler/icons-svelte";
   import { openSettings } from "$lib/stores/ui.svelte.js";
   import { check } from "@tauri-apps/plugin-updater";
+  import { listen } from "@tauri-apps/api/event";
+  import { publishPlayerPreferences } from "$lib/playerPreferences.js";
 
   let { children } = $props();
 
@@ -21,6 +23,19 @@
   const currentPath = $derived($page.url.pathname);
   let playbackReady = $state(false);
   let startupError = $state("");
+  onMount(() => {
+    const pending = listen("mini-player:preferences-request", () => {
+      const { theme, language } = configStore.settings;
+      publishPlayerPreferences({ theme, language });
+    });
+    return () => { void pending.then(stop => stop()).catch(() => {}); };
+  });
+
+  $effect(() => {
+    const { theme, language } = configStore.settings;
+    publishPlayerPreferences({ theme, language });
+  });
+
   onMount(() => {
     initializeScheduledPlayback().then(() => { playbackReady = true; }).catch((error) => {
       console.error("Failed to initialize scheduled playback:", error);

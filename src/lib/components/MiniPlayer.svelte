@@ -9,8 +9,8 @@
   } from "$lib/stores/playback.svelte.js";
   import { getFileName, getMediaDuration } from "$lib/utils/thumbnail.js";
   import { warmupAudioDevice } from "$lib/utils/audioWarmup.js";
-  import { formatDuration } from "$lib/utils/duration.js";
   import { t } from "$lib/i18n/index.svelte.js";
+  import { connectPlayerPreferences } from "$lib/playerPreferences.js";
   import type { UnlistenFn } from "@tauri-apps/api/event";
   import {
     IconPlayerPause,
@@ -19,6 +19,9 @@
     IconMusic,
     IconVideo,
     IconRefresh,
+    IconRepeat,
+    IconAlertCircle,
+    IconX,
   } from "@tabler/icons-svelte";
 
   console.log("[MiniPlayer] Component initializing...");
@@ -43,10 +46,15 @@
   let activeSequence = 0;
   let activeAssetUrl: string | null = null;
   let completedKey: string | null = null;
+  let startedKey: string | null = null;
 
   // Progress bar state
   let currentTime = $state(0);
   let duration = $state(0);
+  let loading = $state(false);
+  let buffering = $state(false);
+  let reducedMotion = $state(false);
+  let failedFile = $state("");
 
   // Loop info from scheduler
   let loopCurrent = $state(0);
@@ -56,9 +64,24 @@
   let scheduleTitle = $state("");
 
   const pb = $derived(playbackStore.state);
-  const fileName = $derived(pb.mediaPath ? getFileName(pb.mediaPath) : "");
+  const fileName = $derived(
+    playlist[currentIndex]?.path === pb.mediaPath
+      ? playlist[currentIndex].name
+      : pb.mediaPath ? getFileName(pb.mediaPath) : "",
+  );
   const tr = $derived(t());
-  const titleText = $derived(scheduleTitle || fileName || "—");
+  const titleText = $derived(scheduleTitle || (pb.status === "idle" ? tr.playback.readyTitle : tr.playback.nowPlaying));
+  const busy = $derived(loading || buffering);
+  const statusText = $derived(
+    pb.status === "idle" ? tr.playback.ready
+      : pb.status === "paused" ? tr.playback.paused
+      : busy ? tr.playback.loading : tr.playback.playing,
+  );
+  const canSeek = $derived(pb.status !== "idle" && !loading && duration > 0);
+  const progress = $derived(duration > 0 ? Math.min(100, currentTime / duration * 100) : 0);
+  const trackPosition = $derived(tr.playback.trackPosition
+    .replace("{current}", String(currentIndex + 1))
+    .replace("{total}", String(playlist.length)));
 
   function activeEl(): HTMLVideoElement | HTMLAudioElement | null {
     if (activeType === "video") return videoEl;
@@ -97,11 +120,18 @@
     await tick();
     playlistEl
       ?.querySelector<HTMLElement>(".playlist-item.active")
-      ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      ?.scrollIntoView({ block: "nearest", behavior: reducedMotion ? "instant" : "smooth" });
   }
 
   function isCurrent(sessionId: string, sequence: number): boolean {
     return activeSessionId === sessionId && activeSequence === sequence;
+  }
+
+  function reportStarted(sessionId: string, sequence: number) {
+    const key = `${sessionId}:${sequence}`;
+    if (!isCurrent(sessionId, sequence) || startedKey === key) return;
+    startedKey = key;
+    void emit("playback:started", { sessionId, sequence }).catch(console.error);
   }
 
   function formatTime(s: number): string {
@@ -109,11 +139,6 @@
     const mins = Math.floor(s / 60);
     const secs = Math.floor(s % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
-  }
-
-  function loopDisplay(n: number): string {
-    if (n === 0) return "∞";
-    return String(n);
   }
 
   function isLooped(): boolean {
@@ -158,6 +183,18 @@
 
 
 
+  onMount(() => {
+    const disconnect = connectPlayerPreferences();
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMotion = () => { reducedMotion = preference.matches; };
+    updateMotion();
+    preference.addEventListener("change", updateMotion);
+    return () => {
+      disconnect();
+      preference.removeEventListener("change", updateMotion);
+    };
+  });
+
   onMount(async () => {
     console.log("[MiniPlayer] Component mounted");
 
@@ -198,7 +235,12 @@
         activeSessionId = payload.sessionId;
         activeSequence = payload.sequence;
         completedKey = null;
+        startedKey = null;
         activeType = payload.type;
+        loading = true;
+        buffering = false;
+        currentTime = 0;
+        duration = 0;
         loopCurrent = payload.currentLoop ?? 0;
         loopTotal = payload.totalLoops ?? 0;
         scheduleTitle = payload.scheduleName ?? "";
@@ -239,12 +281,13 @@
             await warmupAudioDevice();
             if (!isCurrent(payload.sessionId, payload.sequence)) return;
 
-            await el.play();
-            if (!isCurrent(payload.sessionId, payload.sequence)) return;
-            void emit("playback:started", {
-              sessionId: payload.sessionId,
-              sequence: payload.sequence,
-            }).catch(console.error);
+            // A pause received while loading must also prevent autoplay.
+            loading = false;
+            if (pb.status === "playing") {
+              await el.play();
+              if (!isCurrent(payload.sessionId, payload.sequence)) return;
+              reportStarted(payload.sessionId, payload.sequence);
+            }
 
             // Populate active track duration immediately if already loaded
             if (el.duration && isFinite(el.duration)) {
@@ -288,10 +331,21 @@
       await listen("playback:resume", () => {
         console.log("[MiniPlayer] playback:resume event received");
         setPlaybackState({ status: "playing" });
+        if (loading) return;
+        const sessionId = activeSessionId;
+        const sequence = activeSequence;
         activeEl()
           ?.play()
+          .then(() => {
+            if (sessionId && isCurrent(sessionId, sequence)) {
+              reportStarted(sessionId, sequence);
+            }
+          })
           .catch((err) => {
-            console.error("[MiniPlayer] Failed to resume:", err);
+            if (sessionId && isCurrent(sessionId, sequence)) {
+              console.error("[MiniPlayer] Failed to resume:", err);
+              finishPlayback(sessionId, sequence, String(err));
+            }
           });
       }),
       await listen("playback:stop", () => {
@@ -307,6 +361,9 @@
         durations = {};
         currentTime = 0;
         duration = 0;
+        loading = false;
+        buffering = false;
+        failedFile = "";
         loopCurrent = 0;
         loopTotal = 0;
         scheduleTitle = "";
@@ -338,6 +395,9 @@
     const key = `${sessionId}:${sequence}`;
     if (completedKey === key) return;
     completedKey = key;
+    loading = false;
+    buffering = false;
+    if (error) failedFile = fileName;
     console.log(error ? "[MiniPlayer] Media failed" : "[MiniPlayer] Media ended");
     emit("playback:ended", { sessionId, sequence, error });
   }
@@ -390,25 +450,40 @@
     }
   }
 
-  function handleSeek(e: MouseEvent | KeyboardEvent) {
+  function seekTo(time: number) {
     const el = activeEl();
-    if (!el || !duration || !isFinite(duration)) return;
-    // Keyboard: move by 5% per press
-    if (e instanceof KeyboardEvent) {
-      const step = duration * 0.05;
-      if (e.key === ' ') {
-        e.preventDefault();
-        el.currentTime = Math.min(duration, el.currentTime + step);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        el.currentTime = Math.max(0, el.currentTime - step);
-      }
-      return;
+    if (!el || !canSeek) return;
+    currentTime = Math.max(0, Math.min(duration, time));
+    el.currentTime = currentTime;
+  }
+
+  function handleSeek(event: Event) {
+    seekTo(Number((event.target as HTMLInputElement).value));
+  }
+
+  function handleSeekKey(event: KeyboardEvent) {
+    const targets: Record<string, number> = {
+      ArrowLeft: currentTime - 5,
+      ArrowDown: currentTime - 5,
+      ArrowRight: currentTime + 5,
+      ArrowUp: currentTime + 5,
+      Home: 0,
+      End: duration,
+      PageDown: currentTime - duration * 0.1,
+      PageUp: currentTime + duration * 0.1,
+    };
+    if (event.key in targets) {
+      event.preventDefault();
+      seekTo(targets[event.key]);
     }
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const pct = Math.max(0, Math.min(1, x / rect.width));
-    el.currentTime = pct * duration;
+  }
+
+  function handleWaiting(event: Event) {
+    if (event.target === activeEl()) buffering = true;
+  }
+
+  function handlePlaying(event: Event) {
+    if (event.target === activeEl()) buffering = false;
   }
 
   function handleMediaLoadedMetadata() {
@@ -428,13 +503,21 @@
   }
 </script>
 
-<div class="player" data-tauri-drag-region>
+<svelte:head><title>{tr.nav.miniPlayer} · {tr.app.name}</title></svelte:head>
+
+<main class="player" class:is-idle={pb.status === "idle"} class:has-video={pb.mediaType === "video"}>
+  <header class="player-header" data-tauri-drag-region>
+    <div class="heading" data-tauri-drag-region>
+      <span class="app-label" data-tauri-drag-region>{tr.app.name} / {tr.nav.miniPlayer}</span>
+      <h1 title={titleText} data-tauri-drag-region>{titleText}</h1>
+    </div>
+    <span class="player-status" class:playing={pb.status === "playing" && !busy} role="status">
+      <span class="status-dot" aria-hidden="true"></span>{statusText}
+    </span>
+  </header>
+
   <!-- Keep both elements mounted; WebView2 can lose bindings while swapping nodes. -->
-  <div
-    class="media-area"
-    class:audio-placeholder={pb.mediaType !== "video"}
-    data-tauri-drag-region
-  >
+  <div class="media-area" data-tauri-drag-region>
     <video
       bind:this={videoEl}
       class:hidden={pb.mediaType !== "video"}
@@ -444,7 +527,8 @@
       onloadeddata={handleMediaLoaded}
       ontimeupdate={handleTimeUpdate}
       onloadedmetadata={handleMediaLoadedMetadata}
-      style="width:100%;height:100%;object-fit:contain;pointer-events:none;"
+      onwaiting={handleWaiting}
+      onplaying={handlePlaying}
     ></video>
     <audio
       bind:this={audioEl}
@@ -454,365 +538,208 @@
       onloadeddata={handleMediaLoaded}
       ontimeupdate={handleTimeUpdate}
       onloadedmetadata={handleMediaLoadedMetadata}
+      onwaiting={handleWaiting}
+      onplaying={handlePlaying}
     ></audio>
     <div class="video-drag-overlay" data-tauri-drag-region></div>
+  </div>
+
+  <section class="track-details" aria-label={tr.playback.nowPlaying}>
     {#if pb.mediaType !== "video"}
-      <div class="audio-icon"><IconMusic size={32} color="#4ade80" /></div>
+      <div class="audio-art" class:idle-art={pb.status === "idle"} aria-hidden="true">
+        <IconMusic size={pb.status === "idle" ? 32 : 24} stroke={1.5} />
+      </div>
     {/if}
-  </div>
-
-  <!-- Progress bar -->
-  <div class="progress-row">
-    <span class="progress-time">{formatTime(currentTime)}</span>
-    <div class="progress-bar" onclick={handleSeek} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSeek(e); }} role="slider" aria-label="Playback progress" aria-valuenow={Math.round(currentTime)} aria-valuemin={0} aria-valuemax={Math.round(duration)} tabindex={pb.status === 'idle' ? undefined : 0}>
-      <div class="progress-fill" style="width: {duration > 0 ? ((currentTime / duration) * 100).toFixed(2) : 0}%"></div>
+    <div class="track-copy">
+      {#if pb.status !== "idle"}
+        <div class="track-meta">
+          <span>{pb.mediaType === "video" ? tr.playback.video : tr.playback.audio}</span>
+          {#if playlist.length > 0}<span>{trackPosition}</span>{/if}
+        </div>
+      {/if}
+      {#key pb.mediaPath}
+        <h2 title={fileName}>{fileName || tr.playback.readyTitle}</h2>
+      {/key}
+      {#if pb.status === "idle"}<p class="idle-hint">{tr.playback.readyHint}</p>{/if}
     </div>
-    <span class="progress-time">{duration > 0 ? formatTime(duration) : '--:--'}</span>
-  </div>
+  </section>
 
-  <!-- Controls bar -->
-  <div class="controls" data-tauri-drag-region>
-    <div class="info" data-tauri-drag-region title={pb.mediaPath ?? ""}>
-      <div class="title-block">
-        <span class="schedule-title">{titleText}</span>
-        {#if scheduleTitle && fileName}
-          <span class="media-name">{fileName}</span>
-        {/if}
+  <section class="transport" aria-label={tr.playback.controls}>
+    <div class="timeline">
+      <input
+        class="seek"
+        type="range"
+        min="0"
+        max={duration || 1}
+        step="0.1"
+        value={currentTime}
+        style="--progress: {progress}%"
+        aria-label={tr.playback.seek}
+        aria-valuetext={`${formatTime(currentTime)} / ${duration > 0 ? formatTime(duration) : tr.playback.unknownDuration}`}
+        disabled={!canSeek}
+        oninput={handleSeek}
+        onkeydown={handleSeekKey}
+      />
+      <div class="time-labels">
+        <span>{formatTime(currentTime)}</span>
+        <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
       </div>
     </div>
     <div class="buttons">
-      {#if pb.status === "playing"}
-        <span class="tt ctrl-btn-wrap">
-          <button class="ctrl-btn" onclick={handlePause}>
-            <IconPlayerPause size={20} />
-          </button>
-          <span class="tt__bubble">{tr.playback.pause}</span>
-        </span>
-      {:else}
-        <span class="tt ctrl-btn-wrap">
-          <button
-            class="ctrl-btn"
-            onclick={handleResume}
-            disabled={pb.status === "idle"}><IconPlayerPlay size={20} /></button
-          >
-          <span class="tt__bubble">{tr.playback.resume}</span>
-        </span>
-      {/if}
-      <span class="tt ctrl-btn-wrap">
-        <button
-          class="ctrl-btn danger"
-          onclick={handleStop}
-          disabled={pb.status === "idle"}><IconPlayerStop size={20} /></button
-        >
-        <span class="tt__bubble">{tr.playback.stop}</span>
-      </span>
-      {#if pb.status !== "idle"}
-        <span class="tt ctrl-btn-wrap">
-          <button
-            class="ctrl-btn reset"
-            onclick={handleReset}><IconRefresh size={20} /></button
-          >
-          <span class="tt__bubble">{tr.playback.reset}</span>
-        </span>
-      {/if}
+      <button class="ctrl-btn secondary" onclick={handleReset} disabled={pb.status === "idle"}
+        aria-label={tr.playback.restartSchedule} title={tr.playback.restartSchedule}>
+        <IconRefresh size={18} /><span>{tr.playback.reset}</span>
+      </button>
+      <button class="ctrl-btn primary" onclick={pb.status === "playing" ? handlePause : handleResume}
+        disabled={pb.status === "idle"}
+        aria-label={pb.status === "playing" ? tr.playback.pause : tr.playback.resume}
+        title={pb.status === "playing" ? tr.playback.pause : tr.playback.resume}>
+        {#if pb.status === "playing"}<IconPlayerPause size={24} fill="currentColor" />
+        {:else}<IconPlayerPlay size={24} fill="currentColor" />{/if}
+      </button>
+      <button class="ctrl-btn secondary stop" onclick={handleStop} disabled={pb.status === "idle"}
+        aria-label={tr.playback.stop} title={tr.playback.stop}>
+        <IconPlayerStop size={18} /><span>{tr.playback.stop}</span>
+      </button>
     </div>
-  </div>
+  </section>
 
-  <!-- Loop badge -->
-  {#if pb.status !== "idle" && isLooped()}
-    <div class="loop-badge">{formatProgressText()}</div>
+  {#if failedFile}
+    <div class="failure" role="status">
+      <IconAlertCircle size={16} />
+      <span>{tr.playback.skippedFile.replace("{name}", failedFile)}</span>
+      <button onclick={() => { failedFile = ""; }} aria-label={tr.actions.close}><IconX size={14} /></button>
+    </div>
   {/if}
 
-  <!-- Playlist -->
   {#if playlist.length > 0}
-    <div class="playlist" bind:this={playlistEl}>
-      {#each playlist as item, i}
-        <div class="playlist-item" class:active={i === currentIndex}>
-          <span class="item-icon">
-            {#if item.type === "video"}<IconVideo size={12} />{:else}<IconMusic
-                size={12}
-              />{/if}
-          </span>
-          <span class="item-name" title={item.name}>{item.name}</span>
-          <span class="item-meta">
-            {#if durations[item.path] > 0}
-              <span class="item-dur"
-                >{formatDuration(durations[item.path])}</span
-              >
-            {/if}
-            {#if loopLabel(item.loopCount)}
-              <span class="item-loop">{loopLabel(item.loopCount)}</span>
-            {/if}
-          </span>
-        </div>
-      {/each}
-    </div>
+    <section class="queue" aria-label={tr.playback.queue}>
+      <div class="queue-header">
+        <h3>{tr.playback.queue} <span>{playlist.length}</span></h3>
+        {#if isLooped()}
+          <span class="loop-label"><IconRepeat size={13} />{formatProgressText()}</span>
+        {/if}
+      </div>
+      <ol class="playlist" bind:this={playlistEl}>
+        {#each playlist as item, i}
+          <li class="playlist-item" class:active={i === currentIndex} aria-current={i === currentIndex ? "true" : undefined}>
+            <span class="item-number" aria-hidden="true">
+              {#if i === currentIndex}
+                <span class="equalizer" class:running={pb.status === "playing" && !busy}><i></i><i></i><i></i></span>
+              {:else}{String(i + 1).padStart(2, "0")}{/if}
+            </span>
+            <span class="item-copy">
+              <span class="item-name" title={item.name}>{item.name}</span>
+              <span class="item-type">
+                {#if item.type === "video"}<IconVideo size={12} />{tr.playback.video}
+                {:else}<IconMusic size={12} />{tr.playback.audio}{/if}
+                {#if loopLabel(item.loopCount)}<span class="item-loop">{loopLabel(item.loopCount)}</span>{/if}
+              </span>
+            </span>
+            <span class="item-dur">{durations[item.path] > 0 ? formatTime(durations[item.path]) : "--:--"}</span>
+          </li>
+        {/each}
+      </ol>
+    </section>
   {/if}
-</div>
+</main>
 
 <style>
-  :global(body) {
-    background: #1a1a2e;
-    color: #e0e0e0;
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    overflow: hidden;
-    height: 100vh;
-  }
-
   .player {
-    width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
-    background: #1a1a2e;
-  }
-
-  .media-area {
-    height: 214px;
-    flex-shrink: 0;
     overflow: hidden;
-    background: #000;
-    position: relative;
+    color: var(--color-text);
+    background: var(--color-surface);
   }
-  .video-drag-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-  }
-  video.hidden {
-    display: none;
-  }
-  .audio-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #0d0d1e;
-  }
-  .audio-icon {
-    opacity: 1;
-  }
-
-  /* Progress bar */
-  .progress-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px 4px;
-    flex-shrink: 0;
-    background: #12122a;
-  }
-  .progress-time {
-    font-size: 12px;
-    color: #666;
-    font-variant-numeric: tabular-nums;
-    min-width: 32px;
-    text-align: center;
-    user-select: none;
-    flex-shrink: 0;
-  }
-  .progress-bar {
-    flex: 1;
-    height: 4px;
-    background: #2a2a4a;
-    border-radius: 100px;
-    overflow: hidden;
-    cursor: default;
-    transition: cursor 0.15s ease;
-    user-select: none;
-  }
-  .progress-bar:hover {
-    cursor: pointer;
-  }
-  .progress-bar:active {
-    cursor: grabbing;
-  }
-  .progress-fill {
-    height: 100%;
-    background: #4ade80;
-    border-radius: 100px;
-    transition: width 0.1s linear;
-  }
-
-  .controls {
+  .player-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
-    gap: 10px;
-    flex-shrink: 0;
-    background: #12122a;
-    border-top: 1px solid #2a2a4a;
-  }
-  .info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    overflow: hidden;
-    flex: 1;
-  }
-  .title-block {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    min-width: 0;
-    flex: 1;
-    overflow: hidden;
-  }
-  .schedule-title {
-    font-size: 15px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: #e0e0e0;
-  }
-  .media-name {
-    font-size: 11px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: #888;
-  }
-
-  .buttons {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
   }
-  .ctrl-btn-wrap {
-    display: inline-flex;
+  .heading { min-width: 0; }
+  .app-label { display: block; font-size: 10px; color: var(--color-text-muted); margin-bottom: 3px; }
+  h1 { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .player-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-muted); flex-shrink: 0; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .player-status.playing { color: var(--color-primary); }
+  .media-area { height: 0; overflow: hidden; position: relative; flex-shrink: 0; background: #111; }
+  .has-video .media-area { height: min(180px, 35dvh); }
+  video { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+  video.hidden, audio { display: none; }
+  .video-drag-overlay { position: absolute; inset: 0; }
+  .track-details { display: flex; align-items: center; gap: 12px; padding: 18px 18px 8px; flex-shrink: 0; }
+  .audio-art { display: grid; place-items: center; width: 52px; height: 56px; border-radius: var(--radius-md); background: var(--color-surface-2); color: var(--color-primary); flex-shrink: 0; }
+  .track-copy { min-width: 0; }
+  .track-meta { display: flex; gap: 10px; font-size: 11px; color: var(--color-text-muted); margin-bottom: 4px; }
+  h2 { font-size: 17px; line-height: 1.35; font-weight: 600; letter-spacing: -0.3px; overflow: hidden; display: -webkit-box; line-clamp: 2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; animation: track-enter 180ms ease-out; }
+  .has-video .track-details { padding-top: 12px; }
+  .has-video h2 { font-size: 15px; line-clamp: 1; -webkit-line-clamp: 1; }
+  .transport { padding: 0 18px 16px; flex-shrink: 0; }
+  .timeline { margin-bottom: 8px; }
+  .seek { display: block; width: 100%; height: 24px; appearance: none; -webkit-appearance: none; background: transparent; cursor: pointer; outline: none; }
+  .seek::-webkit-slider-runnable-track { height: 4px; border-radius: 8px; background: linear-gradient(to right, var(--color-primary) var(--progress), var(--color-border) var(--progress)); }
+  .seek::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; height: 12px; width: 12px; margin-top: -4px; border-radius: 50%; background: var(--color-primary); }
+  .seek::-moz-range-track { height: 4px; background: var(--color-border); border-radius: 8px; }
+  .seek::-moz-range-progress { height: 4px; background: var(--color-primary); }
+  .seek::-moz-range-thumb { height: 12px; width: 12px; border: 0; border-radius: 50%; background: var(--color-primary); }
+  .seek:disabled { cursor: default; opacity: 0.4; }
+  .seek:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 4px; }
+  .time-labels { display: flex; justify-content: space-between; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+  .buttons { display: flex; align-items: center; justify-content: center; gap: 20px; }
+  .ctrl-btn { display: inline-flex; align-items: center; justify-content: center; border: 0; cursor: pointer; color: var(--color-text); background: transparent; transition: background 150ms ease, transform 100ms ease; }
+  .ctrl-btn.primary { width: 52px; height: 52px; border-radius: 50%; background: var(--color-primary); color: var(--color-surface); flex-shrink: 0; }
+  .ctrl-btn.primary:hover:not(:disabled) { background: var(--color-primary-hover); }
+  .ctrl-btn.secondary { flex-direction: column; gap: 4px; width: 72px; min-height: 46px; border-radius: var(--radius-sm); color: var(--color-text-muted); font-size: 10px; }
+  .ctrl-btn.secondary:hover:not(:disabled) { background: var(--color-surface-3); color: var(--color-text); }
+  .ctrl-btn.stop:hover:not(:disabled) { color: var(--color-danger); }
+  .ctrl-btn:active:not(:disabled) { transform: scale(0.95); }
+  .ctrl-btn:focus-visible, .failure button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+  .ctrl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .queue { display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--color-bg); border-top: 1px solid var(--color-border); }
+  .queue-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 18px 8px; flex-shrink: 0; }
+  h3 { font-size: 12px; font-weight: 600; }
+  h3 span { margin-left: 5px; font-size: 11px; font-weight: 400; color: var(--color-text-muted); }
+  .loop-label { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--color-primary); white-space: nowrap; }
+  .playlist { min-height: 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; padding: 0 8px 8px; scrollbar-width: thin; }
+  .playlist-item { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 10px; border-radius: var(--radius-sm); color: var(--color-text-muted); }
+  .playlist-item.active { background: var(--color-surface-2); color: var(--color-text); }
+  .item-number { display: grid; place-items: center; width: 22px; flex-shrink: 0; font-size: 11px; font-variant-numeric: tabular-nums; }
+  .item-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+  .item-name { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .active .item-name { font-weight: 600; }
+  .item-type { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--color-text-muted); }
+  .item-loop { margin-left: 4px; color: var(--color-primary); }
+  .item-dur { font-size: 11px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .equalizer { display: flex; align-items: center; gap: 2px; height: 16px; color: var(--color-primary); }
+  .equalizer i { display: block; width: 3px; height: 12px; border-radius: 2px; background: currentColor; transform: scaleY(0.35); }
+  .equalizer.running i { animation: level 800ms ease-in-out infinite alternate; }
+  .equalizer.running i:nth-child(2) { animation-delay: -400ms; }
+  .equalizer.running i:nth-child(3) { animation-delay: -200ms; }
+  .failure { display: flex; align-items: center; gap: 8px; padding: 8px 18px; color: var(--color-danger); background: var(--color-surface); font-size: 11px; flex-shrink: 0; }
+  .failure > :global(svg) { flex-shrink: 0; }
+  .failure span { flex: 1; min-width: 0; overflow-wrap: anywhere; max-height: 3em; overflow: auto; }
+  .failure button { display: grid; place-items: center; border: 0; padding: 6px; color: inherit; background: transparent; cursor: pointer; }
+  .is-idle .track-details { flex: 1; flex-direction: column; justify-content: center; text-align: center; padding: 24px; gap: 16px; }
+  .is-idle .track-copy { max-width: 260px; }
+  .idle-art { width: 72px; height: 72px; border-radius: 20px; }
+  .idle-hint { font-size: 13px; line-height: 1.6; color: var(--color-text-muted); margin-top: 8px; }
+  .is-idle .transport { padding-bottom: 24px; }
+  @keyframes track-enter { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes level { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
   }
-  .ctrl-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: #e0e0e0;
-    border-radius: 6px;
-    padding: 6px 10px;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.08s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-  }
-  .ctrl-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  .ctrl-btn:active:not(:disabled) {
-    transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.25);
-  }
-  .ctrl-btn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
-  .ctrl-btn.danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.3);
-    color: #fca5a5;
-  }
-  .ctrl-btn.reset:hover:not(:disabled) {
-    background: rgba(234, 179, 8, 0.2);
-    color: #fde68a;
-  }
-
-  /* Tooltip */
-  .tt {
-    position: relative;
-  }
-
-  .tt__bubble {
-    position: absolute;
-    left: 50%;
-    bottom: calc(100% + 6px);
-    transform: translateX(-50%);
-    padding: 5px 8px;
-    border-radius: 5px;
-    background: #111;
-    color: #fff;
-    font-size: 11px;
-    white-space: nowrap;
-    z-index: 999;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.12s ease, transform 0.12s ease;
-  }
-
-  .tt:hover .tt__bubble,
-  .tt:focus-visible .tt__bubble {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-2px);
-  }
-
-  /* Loop badge */
-  .loop-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 12px;
-    background: #12122a;
-    border-top: 1px solid #2a2a4a;
-    font-size: 11px;
-    color: #4ade80;
-    letter-spacing: 0.04em;
-    font-weight: 600;
-    text-transform: uppercase;
-    flex-shrink: 0;
-    user-select: none;
-  }
-
-  /* Playlist */
-  .playlist {
-    flex: 1;
-    overflow-y: auto;
-    padding: 6px 0;
-    scrollbar-width: thin;
-    scrollbar-color: #2a2a4a transparent;
-  }
-  .playlist-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    font-size: 14px;
-    cursor: default;
-    color: #888;
-    transition: background 0.15s;
-  }
-  .playlist-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  .playlist-item.active {
-    color: #e0e0e0;
-    background: rgba(74, 222, 128, 0.08);
-    border-left: 2px solid #4ade80;
-    padding-left: 10px; /* compensate for border */
-  }
-  .item-icon {
-    flex-shrink: 0;
-    opacity: 0.7;
-    display: flex;
-  }
-  .item-name {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .item-meta {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-  .item-dur {
-    font-size: 12px;
-    color: #666;
-  }
-  .item-loop {
-    font-size: 12px;
-    color: #4ade80;
-    opacity: 0.8;
+  @media (max-height: 480px) {
+    .has-video .media-area { max-height: 34dvh; }
+    .player-header { padding-top: 10px; padding-bottom: 10px; }
+    .transport { padding-bottom: 10px; }
+    .buttons { gap: 16px; }
+    .ctrl-btn.primary { width: 46px; height: 46px; }
   }
 </style>

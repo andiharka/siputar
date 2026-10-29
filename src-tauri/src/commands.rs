@@ -177,22 +177,14 @@ pub async fn open_mini_player(app: AppHandle) -> tauri::Result<()> {
         #[cfg(not(debug_assertions))]
         let url = WebviewUrl::App("/mini-player".into());
         
-        let mut builder = WebviewWindowBuilder::new(&app, "mini-player", url)
+        let builder = WebviewWindowBuilder::new(&app, "mini-player", url)
             .title("Now Playing")
-            .inner_size(380.0, 480.0)
+            .inner_size(380.0, 520.0)
             .resizable(false)
             .always_on_top(true)
-            .visible(true);
-        
-        #[cfg(target_os = "windows")]
-        {
-            builder = builder.decorations(true).skip_taskbar(false);
-        }
-        
-        #[cfg(not(target_os = "windows"))]
-        {
-            builder = builder.decorations(false).skip_taskbar(true);
-        }
+            .visible(true)
+            .decorations(true)
+            .skip_taskbar(false);
         
         println!("[Mini-Player] Calling builder.build()...");
         let _ = std::io::stdout().flush();

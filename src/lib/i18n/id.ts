@@ -48,7 +48,7 @@ export interface Translations {
   tts: { title: string; name: string; namePlaceholder: string; generateAudio: string; credits: string; creditsRemaining: string; connectionOnline: string; connectionOffline: string; text: string; textPlaceholder: string; charLimit: string; voice: string; voicePlaceholder: string; model: string; modelPlaceholder: string; language: string; speed: string; speedHint: string; stability: string; stabilityHint: string; similarity: string; similarityHint: string; generating: string; completed: string; failed: string; noHistory: string; deleteConfirm: string; downloadSuccess: string; downloadFailed: string; offline: string; sync: string; syncing: string };
   days: DayNames;
   unsaved: { title: string; message: string; save: string; discard: string; cancel: string };
-  playback: { nowPlaying: string; paused: string; pause: string; resume: string; stop: string; reset: string; loop: string };
+  playback: { nowPlaying: string; paused: string; pause: string; resume: string; stop: string; reset: string; loop: string; ready: string; readyTitle: string; readyHint: string; loading: string; playing: string; audio: string; video: string; controls: string; seek: string; unknownDuration: string; trackPosition: string; queue: string; restartSchedule: string; skippedFile: string };
   status: { active: string; paused: string };
 }
 
@@ -210,6 +210,20 @@ export const id: Translations = {
     cancel: 'Batal',
   },
   playback: {
+    ready: 'Siap',
+    readyTitle: 'Siap memutar',
+    readyHint: 'Media akan diputar otomatis sesuai jadwal. Anda juga dapat memutar dari daftar jadwal.',
+    loading: 'Memuat',
+    playing: 'Memutar',
+    audio: 'Audio',
+    video: 'Video',
+    controls: 'Kontrol pemutaran',
+    seek: 'Posisi pemutaran',
+    unknownDuration: 'Durasi belum tersedia',
+    trackPosition: 'Media {current} dari {total}',
+    queue: 'Antrean',
+    restartSchedule: 'Putar ulang jadwal dari media pertama',
+    skippedFile: 'Tidak dapat memutar {name}. Media dilewati.',
     nowPlaying: 'Sedang diputar',
     paused: 'Dijeda',
     pause: 'Jeda',
