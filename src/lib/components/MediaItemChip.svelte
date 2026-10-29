@@ -8,6 +8,7 @@
     getMediaDuration,
   } from "$lib/utils/thumbnail.js";
   import { openPanel } from "$lib/stores/ui.svelte.js";
+  import { t } from "$lib/i18n/index.svelte.js";
   import { validationStore } from "$lib/stores/config.svelte.js";
   import {
     IconChevronLeft,
@@ -36,6 +37,7 @@
   } = $props();
 
   const type = $derived(getMediaType(media.path));
+  const tr = $derived(t());
   const fileName = $derived(getFileName(media.path));
   const isDefaultMedia = $derived(media.path.startsWith("/media/"));
   const isMissing = $derived(
@@ -94,22 +96,24 @@
         <button
           class="move-btn"
           class:invisible={isFirst}
+          disabled={isFirst}
           onclick={(e) => {
             e.stopPropagation();
             onmove?.(index, -1);
           }}
-          title="Pindah kiri"
-          tabindex="-1"><IconChevronLeft size={14} /></button
+          title={tr.actions.moveLeft}
+          aria-label={tr.actions.moveLeft}><IconChevronLeft size={14} /></button
         >
         <button
           class="move-btn"
           class:invisible={isLast}
+          disabled={isLast}
           onclick={(e) => {
             e.stopPropagation();
             onmove?.(index, 1);
           }}
-          title="Pindah kanan"
-          tabindex="-1"><IconChevronRight size={14} /></button
+          title={tr.actions.moveRight}
+          aria-label={tr.actions.moveRight}><IconChevronRight size={14} /></button
         >
       </div>
     {/if}
@@ -211,7 +215,8 @@
     transition: opacity 0.15s;
     background: rgba(0, 0, 0, 0.35);
   }
-  .chip:hover .move-overlay {
+  .chip:hover .move-overlay,
+  .chip:focus-within .move-overlay {
     opacity: 1;
   }
 

@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { flip } from "svelte/animate";
+  import { cubicOut } from "svelte/easing";
   import type { Schedule } from "$lib/types/index.js";
   import {
     addMedia,
@@ -18,16 +21,19 @@
     IconPencil,
     IconPlayerPlay,
     IconMusic,
+    IconCopy,
   } from "@tabler/icons-svelte";
 
   let {
     schedule,
     onplay,
     highlight,
+    onduplicate,
   }: {
     schedule: Schedule;
     onplay?: (scheduleId: string) => void;
     highlight?: boolean;
+    onduplicate?: (schedule: Schedule) => void;
   } = $props();
 
   const tr = $derived(t());
@@ -36,6 +42,15 @@
   const totalDuration = $derived(calcTotalDuration(durations, schedule.media));
 
   const DAY_NUMS = [1, 2, 3, 4, 5, 6, 7];
+  let reducedMotion = $state(false);
+
+  onMount(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    reducedMotion = preference.matches;
+    const update = () => { reducedMotion = preference.matches; };
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
+  });
 
   function handleMove(index: number, direction: -1 | 1) {
     const to = index + direction;
@@ -170,6 +185,15 @@
         <span class="tt__bubble">{tr.actions.edit}</span>
       </button>
       <button
+        class="btn btn-ghost btn-icon tt"
+        onclick={() => onduplicate?.(schedule)}
+        title={tr.schedule.duplicate}
+        aria-label={tr.schedule.duplicate}
+      >
+        <IconCopy size={15} />
+        <span class="tt__bubble">{tr.schedule.duplicate}</span>
+      </button>
+      <button
         class="btn btn-ghost btn-icon btn-danger-hover tt"
         onclick={handleDeleteSchedule}
         title={tr.actions.delete}
@@ -182,14 +206,20 @@
 
   <div class="media-strip" role="list">
     {#each schedule.media as item, i (item.id)}
-      <MediaItemChip
-        media={item}
-        scheduleId={schedule.id}
-        index={i}
-        isFirst={i === 0}
-        isLast={i === schedule.media.length - 1}
-        onmove={handleMove}
-      />
+      <div
+        class="media-slot"
+        role="listitem"
+        animate:flip={{ duration: reducedMotion ? 0 : 240, easing: cubicOut }}
+      >
+        <MediaItemChip
+          media={item}
+          scheduleId={schedule.id}
+          index={i}
+          isFirst={i === 0}
+          isLast={i === schedule.media.length - 1}
+          onmove={handleMove}
+        />
+      </div>
     {/each}
 
     <button
@@ -354,6 +384,9 @@
   }
   .media-strip::-webkit-scrollbar {
     height: 4px;
+  }
+  .media-slot {
+    flex-shrink: 0;
   }
 
   .add-media-btn {

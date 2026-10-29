@@ -4,13 +4,16 @@
   import ScheduleCard from "./ScheduleCard.svelte";
   import { compareTime } from "$lib/utils/time.js";
   import { IconTimelineEventExclamation } from "@tabler/icons-svelte";
+  import type { Schedule } from "$lib/types/index.js";
 
   let {
     onplay,
     newScheduleId = null,
+    onduplicate,
   }: {
     onplay?: (scheduleId: string) => void;
     newScheduleId?: string | null;
+    onduplicate?: (schedule: Schedule) => void;
   } = $props();
 
   const tr = $derived(t());
@@ -33,6 +36,7 @@
         <ScheduleCard
           {schedule}
           {onplay}
+          {onduplicate}
           highlight={schedule.id === newScheduleId}
         />
       </div>

@@ -41,10 +41,10 @@ export interface UpdateTranslations {
 export interface Translations {
   app: { name: string, longName: string };
   nav: { schedules: string; audio: string; miniPlayer: string };
-  schedule: { title: string; name: string; namePlaceholder: string; addSchedule: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string; hours: string; minutes: string; seconds: string; loopCount: string; loopForever: string };
+  schedule: { title: string; name: string; namePlaceholder: string; addSchedule: string; duplicate: string; duplicateDescription: string; noSchedules: string; time: string; activeDays: string; enabled: string; statusEnabled: string; statusDisabled: string; totalDuration: string; notifications: string; addNotification: string; minutesBefore: string; deleteConfirm: string; hours: string; minutes: string; seconds: string; loopCount: string; loopForever: string };
   media: { title: string; addMedia: string; defaultMedia: string; defaultMediaDescription: string; loopCount: string; volume: string; fileMissing: string; noMedia: string; deleteConfirm: string; loopForever: string };
   settings: { title: string; theme: string; themeLight: string; themeDark: string; themeAuto: string; language: string; runOnStartup: string; apiKey: string; apiKeyPlaceholder: string; apiKeyHint: string; testConnection: string; testSuccess: string; testFailed: string; audioFolder: string; audioFolderHint: string; browse: string; activityLog: ActivityLogTranslations; update: UpdateTranslations };
-  actions: { save: string; revert: string; close: string; edit: string; delete: string; add: string; play: string; cancel: string; confirm: string; moveUp: string; moveDown: string; generate: string; download: string; openFolder: string; stop: string };
+  actions: { save: string; revert: string; close: string; edit: string; delete: string; add: string; play: string; cancel: string; confirm: string; moveUp: string; moveDown: string; moveLeft: string; moveRight: string; generate: string; download: string; openFolder: string; stop: string };
   tts: { title: string; name: string; namePlaceholder: string; generateAudio: string; credits: string; creditsRemaining: string; connectionOnline: string; connectionOffline: string; text: string; textPlaceholder: string; charLimit: string; voice: string; voicePlaceholder: string; model: string; modelPlaceholder: string; language: string; speed: string; speedHint: string; stability: string; stabilityHint: string; similarity: string; similarityHint: string; generating: string; completed: string; failed: string; noHistory: string; deleteConfirm: string; downloadSuccess: string; downloadFailed: string; offline: string; sync: string; syncing: string };
   days: DayNames;
   unsaved: { title: string; message: string; save: string; discard: string; cancel: string };
@@ -60,6 +60,8 @@ export const id: Translations = {
     name: 'Nama Jadwal',
     namePlaceholder: 'Masukkan nama jadwal',
     addSchedule: 'Tambah Jadwal',
+    duplicate: 'Duplikat Jadwal',
+    duplicateDescription: 'Pilih nama, waktu, dan hari aktif untuk salinan. Semua media dan pengaturan pemutaran akan disalin.',
     noSchedules: 'Belum ada jadwal. Klik tombol + untuk menambahkan.',
     time: 'Waktu',
     activeDays: 'Hari Aktif',
@@ -155,6 +157,8 @@ export const id: Translations = {
     confirm: 'Konfirmasi',
     moveUp: 'Pindah ke atas',
     moveDown: 'Pindah ke bawah',
+    moveLeft: 'Pindah kiri',
+    moveRight: 'Pindah kanan',
     generate: 'Buat Audio',
     download: 'Unduh',
     openFolder: 'Buka Folder',

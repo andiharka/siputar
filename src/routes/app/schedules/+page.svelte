@@ -15,6 +15,8 @@
   import ScheduleList from "$lib/components/ScheduleList.svelte";
   import ConfigPanel from "$lib/components/ConfigPanel.svelte";
   import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
+  import DuplicateScheduleDialog from "$lib/components/DuplicateScheduleDialog.svelte";
+  import type { Schedule } from "$lib/types/index.js";
   import {
     IconPlayerPause,
     IconPlayerPlay,
@@ -25,6 +27,7 @@
   const isDirty = $derived(configStore.isDirty);
   const schedulerStatus = $derived(playbackStore.schedulerStatus);
   let newScheduleId = $state<string | null>(null);
+  let duplicateSource = $state<Schedule | null>(null);
 
   async function handleToggleScheduler() {
     if (schedulerStatus === "active") {
@@ -37,16 +40,20 @@
   }
 
   async function handleAddSchedule() {
-    const { tick } = await import("svelte");
     const schedule = addSchedule();
-    newScheduleId = schedule.id;
+    await highlightSchedule(schedule.id);
+  }
+
+  async function highlightSchedule(id: string) {
+    const { tick } = await import("svelte");
+    newScheduleId = id;
     await tick();
     // Scroll the new card into view
-    const el = document.getElementById(`schedule-${schedule.id}`);
+    const el = document.getElementById(`schedule-${id}`);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
     // Clear highlight after animation completes
     setTimeout(() => {
-      newScheduleId = null;
+      if (newScheduleId === id) newScheduleId = null;
     }, 1600);
   }
 </script>
@@ -95,11 +102,23 @@
 </div>
 
 <div class="page-content">
-  <ScheduleList onplay={startScheduledPlayback} {newScheduleId} />
+  <ScheduleList
+    onplay={startScheduledPlayback}
+    {newScheduleId}
+    onduplicate={(schedule) => { duplicateSource = schedule; }}
+  />
 </div>
 
 <ConfigPanel />
 <ConfirmDialog />
+
+{#if duplicateSource}
+  <DuplicateScheduleDialog
+    schedule={duplicateSource}
+    onclose={() => { duplicateSource = null; }}
+    oncreated={highlightSchedule}
+  />
+{/if}
 
 <style>
   .page-header {

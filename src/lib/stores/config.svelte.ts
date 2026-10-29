@@ -104,6 +104,25 @@ export function addSchedule(): Schedule {
   return schedule;
 }
 
+export function duplicateSchedule(
+  id: string,
+  details: Pick<Schedule, 'name' | 'time' | 'activeDays'>,
+): Schedule | undefined {
+  const source = _config.schedules.find(s => s.id === id);
+  if (!source) return;
+
+  const schedule: Schedule = {
+    ...structuredClone($state.snapshot(source)),
+    ...details,
+    id: uuidv4(),
+    activeDays: [...details.activeDays],
+    media: source.media.map(item => ({ ...item, id: uuidv4() })),
+  };
+  _config.schedules = [..._config.schedules, schedule];
+  invoke('log_schedule_create', { id: schedule.id, time: schedule.time }).catch(() => { });
+  return schedule;
+}
+
 export function updateSchedule(id: string, patch: Partial<Omit<Schedule, 'id' | 'media'>>): void {
   _config.schedules = _config.schedules.map(s => s.id === id ? { ...s, ...patch } : s);
   invoke('log_schedule_update', { id, changes: Object.keys(patch).join(', ') }).catch(() => { });
